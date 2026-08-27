@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+dist/
+
+# Python cache & logs
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.pem
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Arduino Server build caches & user directories
+arduino-server/arduino_user/
+arduino-server/arduino_downloads/
+arduino-server/last_update.txt
+arduino-server/hex_cache.json
+arduino-server/server.log
+build-resources/icon.iconset/
+build-resources/extracted_*.png

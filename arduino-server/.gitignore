@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Operating System files
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# Arduino Server build caches & user directories
+arduino_user/
+last_update.txt
+hex_cache.json
+server.log
+
+# Premium auth secrets — NEVER commit these
+.env
+*.pem

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    window.onerror = function (msg, url, line, col, err) {
+      if (window.parent && typeof window.parent.logDebug === 'function') {
+        window.parent.logDebug("IFRAME ERROR: " + msg + " at " + url + ":" + line);
+      }
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function (event) {
+      if (window.parent && typeof window.parent.logDebug === 'function') {
+        window.parent.logDebug("IFRAME REJECTION: " + (event.reason ? event.reason.message : event.reason));
+      }
+    });
+    var _err = console.error;
+    console.error = function() {
+      if (window.parent && typeof window.parent.logDebug === 'function') {
+        window.parent.logDebug("IFRAME CONSOLE ERROR: " + Array.from(arguments).join(" "));
+      }
+      _err.apply(console, arguments);
+    };
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Arduino-Claw — AI-powered Arduino IDE in your browser. Type natural language commands, generate code, and flash to Arduino Uno via Web Serial.">
+  <title>Arduino-Claw — AI Arduino IDE</title>
+
+  <link rel="stylesheet" href="style.css?v=20260827_v24">
+  <link rel="icon" type="image/svg+xml" href="arduino%20claw.svg">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "codemirror": "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.4.1",
+        "@codemirror/state": "https://esm.sh/@codemirror/state@6.4.1",
+        "@codemirror/view": "https://esm.sh/@codemirror/view@6.26.3",
+        "@codemirror/language": "https://esm.sh/@codemirror/language@6.10.1",
+        "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.3.3",
+        "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete@6.16.0",
+        "@codemirror/search": "https://esm.sh/@codemirror/search@6.5.6",
+        "@codemirror/lint": "https://esm.sh/@codemirror/lint@6.8.0",
+        "@codemirror/lang-cpp": "https://esm.sh/@codemirror/lang-cpp@6.0.2?deps=@codemirror/state@6.4.1",
+        "@codemirror/theme-one-dark": "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@codemirror/state@6.4.1"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Unsupported Browser Banner -->
+  <div class="unsupported-banner" id="unsupported-banner">
+    <div class="unsupported-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="rotate(45 12 12)">
+          <path d="M6 6.5V4.5a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v2" />
+          <rect x="7" y="12" width="10" height="2" rx="0.5" />
+          <path d="M8 14v1.5a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V14" />
+          <path d="M12 17.5v4.5" />
+        </g>
+      </svg>
+    </div>
+    <h2>Arduino-Claw requires Web Serial API</h2>
+    <p>Please use <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a> or
+    <a href="https://www.microsoft.com/edge" target="_blank">Microsoft Edge</a> on desktop.</p>
+    <p style="color:#858585; font-size:13px;">Firefox and Safari do not support Web Serial.</p>
+  </div>
+
+  <!-- App Shell -->
+  <div id="app">
+
+    <!-- API Key Missing Banner -->
+    <div class="api-key-banner" id="api-key-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>No API key set — configure your AI provider key to get started.</span>
+      <button id="banner-get-help-btn" class="banner-help-btn" style="margin-left: 8px;">API Setup Guide</button>
+      <button id="banner-settings-btn">Open Settings</button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-logo" title="Arduino-Claw">
+        <img class="logo-img" src="arduino%20claw.svg" width="34" height="34" alt="Arduino-Claw">
+        <span class="desktop-only-title" style="font-weight: 700; font-size: 15px; color: var(--text-bright); font-family: var(--font-ui); margin-left: 4px;">Arduino Claw</span>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+
+
+      <div class="toolbar-provider">
+        <span>Provider:</span>
+        <span class="provider-name" id="toolbar-provider-name">Gemini</span>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div class="toolbar-port">
+        <div class="port-dot" id="port-dot"></div>
+        <span class="port-label" id="port-label">No port</span>
+      </div>
+
+      <button class="btn btn-connect" id="connect-btn">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="usb-icon">
+            <g transform="rotate(45 12 12)">
+              <path d="M6 6.5V4.5a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v2" />
+              <rect x="7" y="12" width="10" height="2" rx="0.5" class="usb-rect" />
+              <path d="M8 14v1.5a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V14" class="usb-body" />
+              <path d="M12 17.5v4.5" class="usb-wire" />
+            </g>
+          </svg>
+        </span>
+        <span id="connect-label">Connect</span>
+      </button>
+
+      <div class="toolbar-spacer"></div>
+
+      <!-- Board Selector Dropdown (Arduino IDE 2.x Style) -->
+      <div class="board-selector-wrapper" id="board-selector-wrapper">
+        <button class="btn btn-toolbar-nav btn-board-selector" id="board-selector-btn" title="Select Target Board">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+            <rect x="9" y="9" width="6" height="6"></rect>
+            <line x1="9" y1="1" x2="9" y2="4"></line>
+            <line x1="15" y1="1" x2="15" y2="4"></line>
+            <line x1="9" y1="20" x2="9" y2="23"></line>
+            <line x1="15" y1="20" x2="15" y2="23"></line>
+          </svg>
+          <span id="selected-board-name">Arduino UNO</span>
+          <svg class="dropdown-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <!-- Flyout Menu matching Arduino IDE 2.x -->
+        <div class="board-flyout-menu hidden" id="board-flyout-menu">
+          <div class="board-flyout-item board-flyout-manager" id="menu-open-boards-manager">
+            <div class="board-flyout-item-left">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                <rect x="9" y="9" width="6" height="6"></rect>
+              </svg>
+              <span>Boards Manager…</span>
+            </div>
+            <span class="board-flyout-shortcut">⇧⌘B</span>
+          </div>
+          <div class="board-flyout-divider"></div>
+          <div class="board-flyout-platforms" id="board-flyout-platforms">
+            <!-- Rendered by manager.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Library Manager Button -->
+      <button class="btn btn-toolbar-nav" id="library-manager-btn" title="Library Manager — Install & manage Arduino libraries">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          <path d="M12 6v6"></path>
+          <path d="M9 9h6"></path>
+        </svg>
+        <span>Libraries</span>
+      </button>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- Save Sketch Button -->
+      <button class="btn btn-icon-only" id="save-btn" title="Save sketch.ino to local storage & computer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+      </button>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- Auto Upload Toggle Canvas -->
+      <div class="auto-upload-toggle-wrapper" title="Automatically compile & upload after every AI response">
+        <span class="auto-upload-toggle-label">Auto-Upload</span>
+        <canvas id="auto-upload-canvas" width="50" height="24" style="cursor: pointer;"></canvas>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <button class="btn-icon-only" id="settings-btn" title="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Flash Progress Bar -->
+    <div class="flash-progress" id="flash-progress">
+      <div class="flash-progress-inner">
+        <span class="flash-progress-text" id="flash-progress-text">Preparing…</span>
+        <div class="flash-progress-track">
+          <div class="flash-progress-fill" id="flash-progress-fill"></div>
+        </div>
+        <span class="flash-progress-pct" id="flash-progress-pct">0%</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Chat Panel -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="chat-history-toggle-btn" id="chat-history-toggle-btn" title="Toggle Chat History">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <span>AI Assistant</span>
+          </div>
+          <button class="chat-clear-btn" id="chat-clear-btn" title="Clear Chat">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="chat-body-wrapper" style="display: flex; flex: 1; overflow: hidden; position: relative;">
+          <!-- Sidebar Navigation for History -->
+          <div class="chat-history-sidebar collapsed" id="chat-history-sidebar">
+            <button class="new-session-btn" id="new-session-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              New Chat
+            </button>
+            <div class="session-list" id="session-list"></div>
+          </div>
+
+          <!-- History Sidebar Resizer -->
+          <div class="resizer resizer-x" id="resizer-sidebar-chat" style="display: none; width: 4px; z-index: 10;"></div>
+
+          <!-- Main Chat Box -->
+          <div class="chat-main" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; position: relative;">
+            <div class="chat-messages" id="chat-messages"></div>
+
+            <!-- Dynamic Upload Process Stage Indicator (hidden by default) -->
+            <div class="chat-process-container hidden" id="chat-process-container">
+              <div class="chat-process-inner" style="width: 100%; display: flex; align-items: center;">
+                <div class="chat-process-spinner"></div>
+                <span class="chat-process-label" id="chat-process-label">Initializing...</span>
+                <span class="chat-process-auto-badge" id="chat-process-auto-badge" style="margin-left: auto; color: var(--warning); font-size: 11px; font-weight: 600; display: none;">⚡ Auto-Upload</span>
+              </div>
+            </div>
+
+            <div class="chat-input-area">
+              <!-- Selection Reference Context -->
+              <div class="chat-selection-context hidden" id="chat-selection-context">
+                <div class="selection-header">
+                  <span class="selection-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Reference Selection</span>
+                  <button class="selection-clear-btn" id="selection-clear-btn" title="Remove reference">×</button>
+                </div>
+                <pre class="selection-preview" id="selection-preview"></pre>
+              </div>
+
+              <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="chat-input"
+                  placeholder="Describe what you want Arduino to do…"
+                  rows="1"></textarea>
+                <div class="chat-input-actions">
+                  <button class="btn-send" id="send-btn" title="Generate code (Enter)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                  <button class="btn-upload" id="upload-btn" title="Upload to Arduino" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="chat-disclaimer" style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 6px; font-family: var(--font-ui); user-select: none; opacity: 0.85;">
+                AI can make mistakes. Verify important info. Code performance depends on the selected AI.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vertical Resizer -->
+      <div class="resizer resizer-x" id="resizer-chat-editor"></div>
+
+      <!-- Editor Panel -->
+      <div class="editor-panel">
+        <div class="editor-header">
+          <div class="editor-tabs" id="editor-tabs">
+            <div class="editor-tab active" data-tab-id="main">
+              <span class="dot"></span>
+              <span id="editor-filename">sketch.ino</span>
+            </div>
+          </div>
+          <span style="margin-left:auto; font-size:11px; color:var(--text-muted)">Arduino C++</span>
+        </div>
+        <div class="editor-container" id="editor-container"></div>
+      </div>
+
+    </div>
+
+    <!-- Horizontal Resizer -->
+    <div class="resizer resizer-y" id="resizer-main-bottom"></div>
+
+    <!-- Bottom Section -->
+    <div class="bottom-section">
+
+      <!-- Serial Monitor -->
+      <div class="serial-monitor" id="serial-monitor">
+        <div class="serial-header" id="serial-header">
+          <div class="serial-title">
+            <span class="chevron">▼</span>
+            Serial Monitor
+          </div>
+          <div class="serial-controls">
+            <span class="serial-countdown" id="serial-countdown"></span>
+            <span class="serial-baud" id="serial-baud-display">9600 baud</span>
+            <button class="btn-icon-only" id="serial-clear-btn" title="Clear">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="serial-output" id="serial-output"></div>
+      </div>
+
+      <!-- Feedback Bar -->
+      <div class="feedback-bar" id="feedback-bar"></div>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation (visible only on mobile) -->
+    <div class="mobile-nav" id="mobile-nav">
+      <button class="mobile-nav-btn" data-target="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Home</span>
+      </button>
+      <button class="mobile-nav-btn active" data-target="chat">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Chat</span>
+      </button>
+      <button class="mobile-nav-btn" data-target="editor">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+        <span>Code</span>
+      </button>
+      <button class="mobile-nav-btn" data-target="serial">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <span>Serial Monitor</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Settings Overlay -->
+  <div class="settings-overlay" id="settings-overlay"></div>
+
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settings-panel"></div>
+
+  <!-- About Modal Overlay -->
+  <div class="modal-overlay" id="about-modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; display: flex; align-items: center; justify-content: center;">
+    <!-- About Modal Box -->
+    <div class="about-modal" id="about-modal-box" style="width: 380px; max-width: 90%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease;">
+      <!-- Modal Header -->
+      <div style="border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="font-size: 16px; font-weight: 700; color: var(--text-bright); margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-ui);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          About Arduino-Claw
+        </h2>
+        <button id="about-modal-close" style="background: none; border: none; font-size: 20px; font-weight: 300; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; outline: none; transition: color 0.2s;" onmouseover="this.style.color='var(--text-bright)'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+      </div>
+      <!-- Modal Body -->
+      <div style="display: flex; flex-direction: column; gap: 20px; padding: 24px 20px; overflow-y: auto; font-family: var(--font-ui);">
+        <!-- Logo & Title -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;">
+          <img src="arduino%20claw.svg" style="width: 60px; height: 60px; border-radius: 12px; background: var(--bg-main); padding: 8px; border: 1px solid var(--border); filter: brightness(1.6);" alt="Arduino-Claw Logo">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-bright); margin: 0;">Arduino-Claw</h3>
+            <span style="font-size: 11px; color: var(--text-muted);">v1.0.0</span>
+          </div>
+        </div>
+        
+        <div style="height: 1px; background: var(--border); width: 100%;"></div>
+        
+        <!-- Short App Description -->
+        <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; text-align: center; margin: 0; padding: 0 10px;">
+          A sleek, professional AI coding assistant and serial monitor compiler bridge for hardware and microcontroller projects.
+        </p>
+        
+        <div style="height: 1px; background: var(--border); width: 100%;"></div>
+        
+        <!-- Made By -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+          <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Made by</span>
+          
+          <!-- Captain Labs Row -->
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--accent);">Captain Labs</span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <!-- GitHub Link -->
+              <a href="https://github.com/Captain-Labs" target="_blank" title="GitHub" style="color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
+              </a>
+              <!-- Website Link -->
+              <a href="https://www.instagram.com/captain_labs_/" target="_blank" title="Captain Labs Website" style="color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </a>
+              <!-- Instagram Link -->
+              <a href="https://www.instagram.com/captain_labs_/" target="_blank" title="Instagram" style="color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+              <!-- Facebook Link -->
+              <a href="https://www.instagram.com/captain_labs_/" target="_blank" title="Facebook" style="color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </a>
+              <!-- X Link -->
+              <a href="https://www.instagram.com/captain_labs_/" target="_blank" title="X (Twitter)" style="color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4l11.73 16h4.27L8.27 4H4zM4 20l6.77-6.77M13.23 10.77L20 4" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  </div>
+
+  <!-- Help Providers Modal Overlay -->
+  <div class="modal-overlay" id="help-modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 0;">
+    <!-- Help Modal Box -->
+    <div class="help-modal" id="help-modal-box" style="width: 500px; max-width: 90%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); opacity: 0; transition: transform 0.25s ease, opacity 0.25s ease; margin: 40px auto;">
+      <!-- Modal Header -->
+      <div style="border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="font-size: 16px; font-weight: 700; color: var(--text-bright); margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-ui);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          AI Setup Guide & Keys
+        </h2>
+        <button id="help-modal-close" style="background: none; border: none; font-size: 20px; font-weight: 300; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; outline: none; transition: color 0.2s;" onmouseover="this.style.color='var(--text-bright)'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+      </div>
+      <!-- Modal Body (Scrollable) -->
+      <div id="help-modal-body" style="padding: 20px; font-family: var(--font-ui); display: flex; flex-direction: column; gap: 10px;">
+        
+        <!-- 1. Cerebras -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Cerebras <span style="font-size: 11px; color: var(--accent); margin-left: 6px; font-weight: 500;">(Free with limits)</span></span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Go to the <a href="https://cloud.cerebras.ai/" target="_blank" style="color: var(--accent); text-decoration: none;">Cerebras Console <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, register/sign in, navigate to <strong>API Keys</strong>, and generate a new key.</div>
+              <div><strong>2. Configuration:</strong> Go to settings in this app, set provider to <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>https://api.cerebras.ai/v1</code></li>
+                  <li>API Key: Paste your Cerebras Key</li>
+                  <li>Model Name: <code>llama-3.3-70b</code>, <code>llama3.1-8b</code>, <code>llama3.1-70b</code>, <code>llama-4-maverick-17b-128e-instruct</code>, <code>gemma-4-31b</code>, <code>zai-glm-4.7</code>, <code>gpt-oss-120b</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Groq -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Groq <span style="font-size: 11px; color: var(--accent); margin-left: 6px; font-weight: 500;">(Free with limits)</span></span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Go to the <a href="https://console.groq.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Groq Console <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, navigate to <strong>API Keys</strong>, and generate a new key.</div>
+              <div><strong>2. Configuration:</strong> Open settings, select provider <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>https://api.groq.com/openai/v1</code></li>
+                  <li>API Key: Paste your Groq Key</li>
+                  <li>Model Name: <code>llama-3.3-70b-versatile</code>, <code>llama-3.1-8b-instant</code>, <code>gemma2-9b-it</code>, <code>mixtral-8x7b-32768</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. SambaNova -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">SambaNova <span style="font-size: 11px; color: var(--accent); margin-left: 6px; font-weight: 500;">(Free with limits)</span></span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Go to <a href="https://cloud.sambanova.ai/" target="_blank" style="color: var(--accent); text-decoration: none;">SambaNova Cloud <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, register, and copy your API key.</div>
+              <div><strong>2. Configuration:</strong> Set provider to <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>https://api.sambanova.ai/v1</code></li>
+                  <li>API Key: Paste your SambaNova Key</li>
+                  <li>Model Name: <code>Meta-Llama-3.3-70B-Instruct</code>, <code>Meta-Llama-3.1-8B-Instruct</code>, <code>Meta-Llama-3.1-70B-Instruct</code>, <code>DeepSeek-R1</code>, <code>DeepSeek-V3</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. OpenRouter -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">OpenRouter <span style="font-size: 11px; color: var(--accent); margin-left: 6px; font-weight: 500;">(Free)</span></span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Visit <a href="https://openrouter.ai/" target="_blank" style="color: var(--accent); text-decoration: none;">OpenRouter.ai <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, create an account, go to <strong>Keys</strong>, and click <strong>Create Key</strong>.</div>
+              <div><strong>2. Configuration:</strong> Set provider to <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>https://openrouter.ai/api/v1</code></li>
+                  <li>API Key: Paste your OpenRouter Key</li>
+                  <li>Model Name: <code>meta-llama/llama-3.3-70b-instruct</code>, <code>meta-llama/llama-3.1-8b-instruct:free</code>, <code>google/gemini-2.0-flash-exp:free</code>, <code>deepseek/deepseek-chat</code>, <code>deepseek/deepseek-r1</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. DeepSeek -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">DeepSeek</span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Go to the <a href="https://platform.deepseek.com/" target="_blank" style="color: var(--accent); text-decoration: none;">DeepSeek Console <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, click <strong>API Keys</strong>, and create a new key.</div>
+              <div><strong>2. Configuration:</strong> Set provider to <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>https://api.deepseek.com/v1</code></li>
+                  <li>API Key: Paste your DeepSeek Key</li>
+                  <li>Model Name: <code>deepseek-chat</code>, <code>deepseek-reasoner</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Ollama -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Ollama <span style="font-size: 11px; color: var(--accent); margin-left: 6px; font-weight: 500;">(Local)</span></span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Setup Local Server:</strong> Download and install <a href="https://ollama.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Ollama <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>. Run a model in your terminal, e.g. <code>ollama run llama3</code>.</div>
+              <div><strong>2. Configuration:</strong> Choose <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: <code>http://localhost:11434/v1</code></li>
+                  <li>API Key: Leave empty</li>
+                  <li>Model Name: <code>llama3</code>, <code>llama3.1</code>, <code>llama3.3</code>, <code>gemma2</code>, <code>qwen2.5-coder</code>, <code>deepseek-r1</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Gemini -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Gemini</span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Log in to <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Google AI Studio <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, click <strong>Get API Key</strong> and generate a new key.</div>
+              <div><strong>2. Configuration:</strong> Open settings, set provider to <strong>Gemini</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>Gemini API Key: Paste your key here</li>
+                  <li>Model Name: <code>gemini-2.0-flash</code> (default), <code>gemini-2.0-flash-lite</code>, <code>gemini-1.5-flash</code>, <code>gemini-1.5-pro</code>, <code>gemini-2.0-pro-exp-02-05</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. Claude -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Claude</span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Get API Key:</strong> Register/login at the <a href="https://console.anthropic.com/" target="_blank" style="color: var(--accent); text-decoration: none;">Anthropic Console <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg></a>, click <strong>API Keys</strong>, and generate a new key.</div>
+              <div><strong>2. Configuration:</strong> Set provider to <strong>Claude</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>Claude API Key: Paste your key here</li>
+                  <li>Model Name: <code>claude-3-5-sonnet-latest</code> (default), <code>claude-3-5-haiku-latest</code>, <code>claude-3-opus-latest</code>, <code>claude-sonnet-4-20250514</code>, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. Custom URL -->
+        <div class="help-accordion-item" style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.01);">
+          <div class="help-accordion-header" style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); user-select: none;" onclick="this.parentElement.classList.toggle('expanded')">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-bright);">Custom URL</span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="help-accordion-content" style="max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; background: rgba(0,0,0,0.15);">
+            <div style="padding: 16px; font-size: 12.5px; color: var(--text-primary); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; line-height: 1.5;">
+              <div><strong>1. Details:</strong> For any provider running an OpenAI-compatible endpoint.</div>
+              <div><strong>2. Setup:</strong> Choose <strong>Custom URL (OpenAI-compatible)</strong>.</div>
+              <div><strong>3. Fields to Paste:</strong>
+                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                  <li>API Base URL: Base endpoint (e.g. <code>https://api.yourprovider.com/v1</code>)</li>
+                  <li>API Key: Your API Key</li>
+                  <li>Model Name: Desired model identifier string, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Arduino IDE Manager Overlay & Drawer (Boards & Libraries) -->
+  <div class="manager-overlay" id="manager-overlay"></div>
+  <div class="manager-drawer" id="manager-drawer">
+    <div class="manager-header">
+      <div class="manager-title-tabs">
+        <button class="manager-tab-btn active" id="tab-boards-btn" data-target="boards">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+            <rect x="9" y="9" width="6" height="6"></rect>
+          </svg>
+          <span>BOARDS MANAGER</span>
+        </button>
+        <button class="manager-tab-btn" id="tab-libraries-btn" data-target="libraries">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>LIBRARY MANAGER</span>
+        </button>
+      </div>
+      <button class="manager-close-btn" id="manager-close-btn" title="Close">&times;</button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="manager-controls">
+      <div class="manager-search-box">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="manager-search-input" placeholder="Filter your search..." autocomplete="off">
+        <button class="manager-search-clear" id="manager-search-clear" title="Clear">&times;</button>
+      </div>
+
+      <div class="manager-filter-row">
+        <div class="manager-filter-group">
+          <label for="manager-type-filter">Type:</label>
+          <select id="manager-type-filter">
+            <option value="all">All</option>
+            <option value="installed">Installed</option>
+            <option value="updatable">Updatable</option>
+          </select>
+        </div>
+
+        <div class="manager-filter-group" id="manager-topic-filter-group" style="display: none;">
+          <label for="manager-topic-filter">Topic:</label>
+          <select id="manager-topic-filter">
+            <option value="all">All</option>
+            <option value="Display">Display</option>
+            <option value="Sensors">Sensors</option>
+            <option value="Device Control">Device Control</option>
+            <option value="Timing">Timing</option>
+            <option value="Data Processing">Data Processing</option>
+            <option value="Communication">Communication</option>
+            <option value="Signal Input/Output">Signal I/O</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Content Area -->
+    <div class="manager-content" id="manager-content">
+      <div class="manager-loading-state" id="manager-loading">
+        <div class="manager-spinner"></div>
+        <span>Searching Arduino catalog…</span>
+      </div>
+      <div class="manager-list" id="manager-list"></div>
+      <div class="manager-empty" id="manager-empty" style="display: none;">
+        No matching items found.
+      </div>
+    </div>
+  </div>
+
+  <!-- Port Selection Modal Overlay -->
+  <div class="port-modal-overlay hidden" id="port-modal-overlay">
+    <div class="port-modal" id="port-modal">
+      <div class="port-modal-header">
+        <div class="port-modal-title-group">
+          <div class="port-modal-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+              <rect x="9" y="9" width="6" height="6"></rect>
+              <line x1="9" y1="1" x2="9" y2="4"></line>
+              <line x1="15" y1="1" x2="15" y2="4"></line>
+              <line x1="9" y1="20" x2="9" y2="23"></line>
+              <line x1="15" y1="20" x2="15" y2="23"></line>
+              <line x1="20" y1="9" x2="23" y2="9"></line>
+              <line x1="20" y1="14" x2="23" y2="14"></line>
+              <line x1="1" y1="9" x2="4" y2="9"></line>
+              <line x1="1" y1="14" x2="4" y2="14"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="port-modal-title">Select Serial Port</h3>
+            <p class="port-modal-subtitle">Choose your connected Arduino board / USB device</p>
+          </div>
+        </div>
+        <button class="port-modal-close" id="port-modal-close" title="Close">&times;</button>
+      </div>
+
+      <div class="port-modal-body">
+        <div class="port-modal-toolbar">
+          <span class="port-modal-section-label">DETECTED SERIAL PORTS</span>
+          <button class="port-modal-refresh-btn" id="port-modal-refresh-btn" title="Refresh Ports">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div class="port-modal-list" id="port-modal-list">
+          <div class="port-modal-loading">
+            <div class="port-modal-spinner"></div>
+            <span>Scanning for serial ports...</span>
+          </div>
+        </div>
+
+        <div class="port-modal-webserial-option">
+          <button class="port-modal-request-btn" id="port-modal-request-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Grant Access to New USB Device
+          </button>
+        </div>
+      </div>
+
+      <div class="port-modal-footer">
+        <button class="btn btn-secondary" id="port-modal-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="port-modal-connect-btn" disabled>Connect Port</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Entry Point -->
+  <script type="module" src="app.js?v=20260827_v25"></script>
+
+</body>
+</html>

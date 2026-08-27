@@ -1,0 +1,117 @@
+{
+  "name": "arduino-claw",
+  "version": "1.0.0",
+  "description": "Arduino-Claw — AI-powered Arduino IDE Desktop App",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac dmg",
+    "dist:win": "electron-builder --win nsis",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:all": "electron-builder -mwl"
+  },
+  "keywords": [
+    "arduino",
+    "ai",
+    "ide",
+    "embedded",
+    "microcontroller",
+    "electron"
+  ],
+  "author": {
+    "name": "Captain Labs",
+    "email": "support@arduinoclaw.com"
+  },
+  "homepage": "https://arduinoclaw.com",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.1.5",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.captainlabs.arduinoclaw",
+    "productName": "Arduino Claw",
+    "copyright": "Copyright © 2026 Captain Labs",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!**/*.pem",
+      "!setup_vps.sh",
+      "!.git/**"
+    ],
+    "extraResources": [
+      {
+        "from": "arduino-server",
+        "to": "arduino-server",
+        "filter": [
+          "**/*",
+          "!__pycache__/**",
+          "!arduino_downloads/**"
+        ]
+      }
+    ],
+    "mac": {
+      "icon": "build-resources/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "win": {
+      "icon": "build-resources/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Arduino Claw",
+      "uninstallDisplayName": "Arduino Claw"
+    },
+    "linux": {
+      "icon": "build-resources/icon.png",
+      "category": "Development;IDE;",
+      "target": ["AppImage", "deb"]
+    }
+  }
+}
