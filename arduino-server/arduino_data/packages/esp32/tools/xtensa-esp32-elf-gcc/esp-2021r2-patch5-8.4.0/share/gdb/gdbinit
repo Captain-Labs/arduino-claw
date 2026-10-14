@@ -1,6 +1,0 @@
-python
-import sys
-sys.path.insert(0, '/Users/brnomac003/.gitlab-runner/builds/qR2TxTby/0/idf/crosstool-NG/builds/xtensa-esp32-elf/share/gcc-8.4.0/python')
-from libstdcxx.v6.printers import register_libstdcxx_printers
-register_libstdcxx_printers (None)
-end
