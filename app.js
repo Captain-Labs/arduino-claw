@@ -1027,13 +1027,21 @@ const portModalRequestBtn = document.getElementById('port-modal-request-btn');
 const portModalList = document.getElementById('port-modal-list');
 
 let availableModalPorts = [];
-let selectedModalPort = null;
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 async function openPortModal() {
   if (!portModalOverlay) return;
   portModalOverlay.classList.remove('hidden');
   selectedModalPort = null;
-  if (portModalConnectBtn) portModalConnectBtn.disabled = true;
+  if (portModalConnectBtn) portModalConnectBtn.disabled = false;
   await scanAndRenderModalPorts();
 }
 
@@ -1064,6 +1072,7 @@ if (portModalRequestBtn) {
       if (granted) {
         closePortModal();
         setConnectedUI();
+        addMessage('system', 'Connected to Arduino (USB Serial)');
       }
     } catch (err) {
       console.warn('User cancelled port request:', err);
@@ -1129,7 +1138,6 @@ async function scanAndRenderModalPorts() {
 
   if (availableModalPorts.length === 0) {
     selectedModalPort = null;
-    if (portModalConnectBtn) portModalConnectBtn.disabled = true;
     portModalList.innerHTML = `
       <div class="port-modal-empty">
         <p style="margin: 0 0 6px 0; font-weight: 600; color: var(--text-primary);">No serial ports detected</p>
@@ -1144,7 +1152,6 @@ async function scanAndRenderModalPorts() {
     item.className = `port-modal-item ${index === 0 ? 'selected' : ''}`;
     if (index === 0) {
       selectedModalPort = p;
-      if (portModalConnectBtn) portModalConnectBtn.disabled = false;
     }
 
     item.innerHTML = `
@@ -1174,10 +1181,45 @@ async function scanAndRenderModalPorts() {
 
     portModalList.appendChild(item);
   });
+
+  if (portModalConnectBtn) portModalConnectBtn.disabled = false;
 }
 
 async function connectSelectedModalPort() {
-  if (!selectedModalPort) return;
+  // If user didn't explicitly select, but ports are in modal, use the first one
+  if (!selectedModalPort && availableModalPorts.length > 0) {
+    selectedModalPort = availableModalPorts[0];
+  }
+
+  // If still no port selected (e.g. 0 were listed), query bridge to auto-connect to detected board
+  if (!selectedModalPort) {
+    try {
+      const bridgeRes = await bridge.listPorts();
+      if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
+        selectedModalPort = {
+          type: 'bridge',
+          portObj: bridgeRes.ports[0],
+          name: bridgeRes.ports[0].board || 'Arduino Uno',
+          sub: bridgeRes.ports[0].port || bridgeRes.ports[0].address
+        };
+      }
+    } catch (_) {}
+  }
+
+  if (!selectedModalPort) {
+    closePortModal();
+    try {
+      const granted = await serial.requestPort();
+      if (granted) {
+        setConnectedUI();
+        addMessage('system', 'Connected to Arduino (USB Serial)');
+      }
+    } catch (e) {
+      addMessage('system', 'No port was selected.');
+    }
+    return;
+  }
+
   const targetPort = selectedModalPort;
   closePortModal();
 

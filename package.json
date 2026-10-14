@@ -43,6 +43,7 @@
       "index.html",
       "style.css",
       "app.js",
+      "logo.png",
       "modules/**/*",
       "electron/**/*",
       "build-resources/**/*",
