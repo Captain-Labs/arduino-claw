@@ -211,7 +211,7 @@ function createUpdateToast() {
     btnSpan.textContent = 'Installing…';
 
     try {
-      const res = await fetch('http://localhost:5000/updates/install', { method: 'POST' });
+      const res = await fetch('http://127.0.0.1:5000/updates/install', { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
         document.getElementById('update-toast-body-text').innerHTML = '✅ <strong>All updates installed successfully!</strong>';
@@ -236,7 +236,7 @@ function createUpdateToast() {
 
 async function checkArduinoUpdatesOnLaunch() {
   try {
-    const res = await fetch('http://localhost:5000/updates/check');
+    const res = await fetch('http://127.0.0.1:5000/updates/check');
     if (!res.ok) return;
 
     const data = await res.json();
@@ -250,7 +250,7 @@ async function checkArduinoUpdatesOnLaunch() {
 
     if (getAutoUpdate()) {
       addMessage('system', `⚡ Auto-updating ${items.length} Arduino CLI updates in background…`);
-      const installRes = await fetch('http://localhost:5000/updates/install', { method: 'POST' });
+      const installRes = await fetch('http://127.0.0.1:5000/updates/install', { method: 'POST' });
       const installData = await installRes.json();
       if (installRes.ok && installData.success) {
         addMessage('system', '✅ Auto-update completed: All Arduino CLI cores and libraries are now up-to-date.');
@@ -976,7 +976,7 @@ function promptWebSerialPortTrigger() {
   const scanBtn = bubble.querySelector('.btn-trigger-web-serial');
   scanBtn.addEventListener('click', async () => {
     scanBtn.disabled = true;
-    scanBtn.textContent = 'Detecting...';
+    scanBtn.textContent = 'Connecting...';
     
     try {
       // 1. Check detected physical ports from bridge/server
@@ -988,22 +988,41 @@ function promptWebSerialPortTrigger() {
         }
       } catch (_) {}
 
-      // 2. If exactly 1 physical hardware port is detected, smoothly connect to it
-      if (detectedPorts.length === 1) {
+      // 2. If at least 1 physical hardware port is detected, smoothly auto-connect immediately!
+      if (detectedPorts.length > 0) {
         const p = detectedPorts[0];
-        selectedCliPort = p;
+        const portAddr = p.port || p.address;
+        const boardName = p.board || p.label || 'Arduino Uno';
+
+        // Direct Electron Web Serial matching
+        if (window.electronAPI && typeof window.electronAPI.setTargetPort === 'function') {
+          try {
+            await window.electronAPI.setTargetPort(portAddr);
+          } catch (_) {}
+        }
+
+        if (serial.isSerialSupported()) {
+          try {
+            await serial.requestPort();
+          } catch (_) {}
+        }
+
+        selectedCliPort = {
+          port: portAddr,
+          address: portAddr,
+          board: boardName,
+          fqbn: p.fqbn || 'arduino:avr:uno'
+        };
         localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
         setConnectedUI();
         updateCliPortUI();
-        const portName = p.port || p.address || 'Arduino';
-        const boardInfo = p.board ? ` (${p.board})` : '';
-        addMessage('system', `Connected to port: <strong>${portName}</strong>${boardInfo}`);
+        addMessage('system', `Connected to port: <strong>${escapeHtml(portAddr)}</strong> (${escapeHtml(boardName)})`);
         bubble.remove();
         handleUpload();
         return;
       }
 
-      // 3. If multiple ports or 0 ports are detected, open the Port Selection Modal
+      // 3. If 0 ports detected from bridge, fallback to prompt or modal
       bubble.remove();
       openPortModal();
     } catch (err) {
@@ -1090,8 +1109,35 @@ async function scanAndRenderModalPorts() {
   `;
 
   availableModalPorts = [];
+  const seenAddresses = new Set();
 
-  // 1. Get Web Serial granted ports
+  // 1. Get CLI Bridge detected ports (embedded server / Electron IPC)
+  try {
+    const bridgeRes = await bridge.listPorts();
+    if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
+      bridgeRes.ports.forEach((bp, idx) => {
+        const portAddr = bp.port || bp.address;
+        if (!portAddr) return;
+        const normalized = portAddr.trim().toLowerCase();
+        if (seenAddresses.has(normalized)) return;
+        seenAddresses.add(normalized);
+
+        const boardName = bp.board || bp.label || bp.name || 'Arduino Uno';
+        availableModalPorts.push({
+          type: 'bridge',
+          portObj: bp,
+          name: boardName,
+          sub: portAddr,
+          badge: 'USB Serial',
+          id: `bridge_${idx}`
+        });
+      });
+    }
+  } catch (err) {
+    console.warn('Bridge port scan error:', err);
+  }
+
+  // 2. Get Web Serial granted ports
   if (serial.isSerialSupported()) {
     try {
       const webPorts = await serial.listPorts();
@@ -1099,39 +1145,21 @@ async function scanAndRenderModalPorts() {
         const info = wp.getInfo ? wp.getInfo() : {};
         const vid = info.usbVendorId ? `0x${info.usbVendorId.toString(16).padStart(4, '0')}` : '';
         const pid = info.usbProductId ? `0x${info.usbProductId.toString(16).padStart(4, '0')}` : '';
-        availableModalPorts.push({
-          type: 'webserial',
-          portObj: wp,
-          name: 'Arduino Uno / USB Serial Device',
-          sub: `USB VID:PID ${vid}:${pid}`,
-          badge: 'Hardware Port',
-          id: `webserial_${idx}`
-        });
-      });
-    } catch (_) {}
-  }
-
-  // 2. Get CLI Bridge detected ports (from embedded backend / compiler server)
-  try {
-    const bridgeRes = await bridge.listPorts();
-    if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
-      bridgeRes.ports.forEach((bp, idx) => {
-        const portAddr = bp.port || bp.address;
-        if (!portAddr) return;
-        const already = availableModalPorts.some(p => p.sub && p.sub.includes(portAddr));
+        const subStr = `USB VID:PID ${vid}:${pid}`;
+        const already = availableModalPorts.some(p => p.sub && p.sub.includes(subStr));
         if (!already) {
           availableModalPorts.push({
-            type: 'bridge',
-            portObj: bp,
-            name: bp.board || bp.label || bp.name || 'Arduino Uno',
-            sub: portAddr,
-            badge: 'USB Serial',
-            id: `bridge_${idx}`
+            type: 'webserial',
+            portObj: wp,
+            name: 'Arduino Uno / USB Serial Device',
+            sub: subStr,
+            badge: 'Hardware Port',
+            id: `webserial_${idx}`
           });
         }
       });
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
 
   // 3. Render ports list
   portModalList.innerHTML = '';
@@ -1144,15 +1172,17 @@ async function scanAndRenderModalPorts() {
         <p style="margin: 0; font-size: 11.5px;">Plug in your Arduino board via USB and click <strong>Refresh</strong>, or use <strong>Grant Access</strong> below.</p>
       </div>
     `;
+    if (portModalConnectBtn) portModalConnectBtn.disabled = false;
     return;
   }
+
+  // Auto-select first detected port by default!
+  selectedModalPort = availableModalPorts[0];
+  if (portModalConnectBtn) portModalConnectBtn.disabled = false;
 
   availableModalPorts.forEach((p, index) => {
     const item = document.createElement('div');
     item.className = `port-modal-item ${index === 0 ? 'selected' : ''}`;
-    if (index === 0) {
-      selectedModalPort = p;
-    }
 
     item.innerHTML = `
       <div class="port-item-left">
@@ -1181,31 +1211,31 @@ async function scanAndRenderModalPorts() {
 
     portModalList.appendChild(item);
   });
-
-  if (portModalConnectBtn) portModalConnectBtn.disabled = false;
 }
 
 async function connectSelectedModalPort() {
-  // If user didn't explicitly select, but ports are in modal, use the first one
+  // 1. If user didn't explicitly select an item, auto-select the first available port
   if (!selectedModalPort && availableModalPorts.length > 0) {
     selectedModalPort = availableModalPorts[0];
   }
 
-  // If still no port selected (e.g. 0 were listed), query bridge to auto-connect to detected board
+  // 2. If still no port selected, re-query bridge for newly plugged in board
   if (!selectedModalPort) {
     try {
       const bridgeRes = await bridge.listPorts();
       if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
+        const bp = bridgeRes.ports[0];
         selectedModalPort = {
           type: 'bridge',
-          portObj: bridgeRes.ports[0],
-          name: bridgeRes.ports[0].board || 'Arduino Uno',
-          sub: bridgeRes.ports[0].port || bridgeRes.ports[0].address
+          portObj: bp,
+          name: bp.board || bp.label || bp.name || 'Arduino Uno',
+          sub: bp.port || bp.address
         };
       }
     } catch (_) {}
   }
 
+  // 3. Fallback: prompt Web Serial permission
   if (!selectedModalPort) {
     closePortModal();
     try {
@@ -1223,19 +1253,41 @@ async function connectSelectedModalPort() {
   const targetPort = selectedModalPort;
   closePortModal();
 
-  if (targetPort.type === 'webserial') {
-    serial.setPort(targetPort.portObj);
-    setConnectedUI();
-    addMessage('system', `Connected to Arduino (${targetPort.name || 'USB Serial'})`);
-  } else if (targetPort.type === 'bridge') {
-    selectedCliPort = targetPort.portObj;
-    localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
-    setConnectedUI();
-    updateCliPortUI();
-    const portAddr = selectedCliPort.port || selectedCliPort.address || 'Unknown Port';
-    const boardInfo = selectedCliPort.board ? ` (${selectedCliPort.board})` : '';
-    addMessage('system', `Connected to port: <strong>${portAddr}</strong>${boardInfo}`);
+  const portAddr = targetPort.sub || (targetPort.portObj && (targetPort.portObj.port || targetPort.portObj.address)) || 'Serial Device';
+  const boardName = targetPort.name || (targetPort.portObj && targetPort.portObj.board) || 'Arduino Uno';
+
+  // 1. Tell Electron main process which port we are targeting
+  if (window.electronAPI && typeof window.electronAPI.setTargetPort === 'function') {
+    try {
+      await window.electronAPI.setTargetPort(portAddr);
+    } catch (_) {}
   }
+
+  // 2. Connect Web Serial for live Serial Monitor & direct flashing
+  if (serial.isSerialSupported()) {
+    try {
+      if (targetPort.type === 'webserial' && targetPort.portObj) {
+        serial.setPort(targetPort.portObj);
+      } else {
+        await serial.requestPort();
+      }
+    } catch (e) {
+      console.warn('Web Serial auto-grant notice:', e);
+    }
+  }
+
+  // 3. Set CLI Port for native compilation & upload
+  selectedCliPort = {
+    port: portAddr,
+    address: portAddr,
+    board: boardName,
+    fqbn: (targetPort.portObj && targetPort.portObj.fqbn) || 'arduino:avr:uno'
+  };
+  localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
+
+  setConnectedUI();
+  updateCliPortUI();
+  addMessage('system', `Connected to port: <strong>${escapeHtml(portAddr)}</strong> (${escapeHtml(boardName)})`);
 }
 
 if (portModalConnectBtn) {
@@ -1533,15 +1585,20 @@ async function generateAndShowCode(command) {
       addMessage('system', '🔍 **I2C Agent**: Probing I2C bus on board to discover hardware address…');
 
       try {
-        // Open temporary scanner tab in editor
-        openTab('i2c-scanner', '🔍 I2C Scanner.ino', I2C_SCANNER_SKETCH, true);
-
-        const scanComp = await fetch('http://localhost:5000/compile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: I2C_SCANNER_SKETCH, board: 'uno' })
-        });
-        const scanData = await scanComp.json();
+        let scanData = null;
+        if (window.electronAPI && typeof window.electronAPI.compile === 'function') {
+          try {
+            scanData = await window.electronAPI.compile({ code: I2C_SCANNER_SKETCH, board: 'uno' });
+          } catch (_) {}
+        }
+        if (!scanData) {
+          const scanComp = await fetch('http://127.0.0.1:5000/compile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: I2C_SCANNER_SKETCH, board: 'uno' })
+          });
+          scanData = await scanComp.json();
+        }
         if (scanData.success && scanData.hex) {
           showFlashProgress(true);
           setFlashProgress(40, 'Probing I2C bus…');
@@ -1737,10 +1794,9 @@ async function handleUpload() {
       let targetPort = selectedCliPort?.port;
       if (!targetPort) {
         try {
-          const portsRes = await fetch('http://localhost:5000/ports');
-          const portsData = await portsRes.json();
+          const portsData = await bridge.listPorts();
           if (portsData.ports && portsData.ports.length > 0) {
-            targetPort = portsData.ports[0].port;
+            targetPort = portsData.ports[0].port || portsData.ports[0].address;
           }
         } catch (e) {}
       }
@@ -1756,19 +1812,27 @@ async function handleUpload() {
 
       setFlashProgress(50, `Compiling & flashing ${activeBoard.name}…`);
 
-      const uploadRes = await fetch('http://localhost:5000/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, port: targetPort, fqbn: activeBoard.fqbn })
-      });
-      const uploadData = await uploadRes.json();
+      let uploadData = null;
+      if (window.electronAPI && typeof window.electronAPI.upload === 'function') {
+        try {
+          uploadData = await window.electronAPI.upload({ code, port: targetPort, fqbn: activeBoard.fqbn });
+        } catch (_) {}
+      }
+      if (!uploadData) {
+        const uploadRes = await fetch('http://127.0.0.1:5000/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, port: targetPort, fqbn: activeBoard.fqbn })
+        });
+        uploadData = await uploadRes.json();
+      }
 
-      if (!uploadRes.ok || !uploadData.success) {
+      if (!uploadData || !uploadData.success) {
         showFlashProgress(false);
         setFlashing(false);
         uploadBtn.disabled = false;
         hideProcessStep();
-        const errMsg = uploadData.error || uploadData.message || 'Upload failed';
+        const errMsg = uploadData?.error || uploadData?.message || 'Upload failed';
         setCompileError(errMsg);
         renderCompileErrorCard(errMsg, handleRetry);
         showFeedbackBar();
@@ -1799,19 +1863,27 @@ async function handleUpload() {
     }
 
     // ── AVR DIRECT WEB SERIAL PATH (Uno, Nano, Mega, etc.) ──
-    const compileRes = await fetch('http://localhost:5000/compile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, board: activeBoard.fqbn || activeBoard.id || 'arduino:avr:uno' })
-    });
-    const compileData = await compileRes.json();
+    let compileData = null;
+    if (window.electronAPI && typeof window.electronAPI.compile === 'function') {
+      try {
+        compileData = await window.electronAPI.compile({ code, board: activeBoard.fqbn || activeBoard.id || 'arduino:avr:uno' });
+      } catch (_) {}
+    }
+    if (!compileData) {
+      const compileRes = await fetch('http://127.0.0.1:5000/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, board: activeBoard.fqbn || activeBoard.id || 'arduino:avr:uno' })
+      });
+      compileData = await compileRes.json();
+    }
 
-    if (!compileRes.ok || !compileData.success || !compileData.hex) {
+    if (!compileData || !compileData.success || !compileData.hex) {
       showFlashProgress(false);
       setFlashing(false);
       uploadBtn.disabled = false;
       hideProcessStep();
-      const errMsg = compileData.error || compileData.message || 'Compilation failed';
+      const errMsg = compileData?.error || compileData?.message || 'Compilation failed';
       setCompileError(errMsg);
       renderCompileErrorCard(errMsg, handleRetry);
       showFeedbackBar();
@@ -1846,13 +1918,22 @@ async function handleUpload() {
       try {
         openTab('i2c-scanner', '🔍 I2C Scanner.ino', I2C_SCANNER_SKETCH, true);
 
-        const scanRes = await fetch('http://localhost:5000/compile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: I2C_SCANNER_SKETCH, board: 'uno' })
-        });
-        const scanData = await scanRes.json();
-        if (scanData.success && scanData.hex) {
+        let scanData = null;
+        if (window.electronAPI && typeof window.electronAPI.compile === 'function') {
+          try {
+            scanData = await window.electronAPI.compile({ code: I2C_SCANNER_SKETCH, board: 'uno' });
+          } catch (_) {}
+        }
+        if (!scanData) {
+          const scanRes = await fetch('http://127.0.0.1:5000/compile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: I2C_SCANNER_SKETCH, board: 'uno' })
+          });
+          scanData = await scanRes.json();
+        }
+
+        if (scanData && scanData.success && scanData.hex) {
           await flashHex(scanData.hex, serial);
           const scanOut = await startSerialCapture(2.5);
           const recoveredAddr = parseDiscoveredI2CAddress(scanOut);
@@ -1883,7 +1964,7 @@ async function handleUpload() {
     showFlashProgress(false);
     hideProcessStep();
     if (err.message && err.message.includes('Failed to fetch')) {
-      addMessage('system', '⚠️ **Compiler Server Starting or Unreachable**: Could not connect to the local compilation server on `http://localhost:5000`.\n\nPlease ensure the app has permissions to bind local port 5000, or retry in a few seconds.');
+      addMessage('system', '⚠️ **Compiler Server Starting or Unreachable**: Could not connect to the local compilation server on `http://127.0.0.1:5000`.\n\nPlease ensure the app has permissions to bind local port 5000, or retry in a few seconds.');
     } else {
       addMessage('system', `Upload failed: ${err.message}`);
     }

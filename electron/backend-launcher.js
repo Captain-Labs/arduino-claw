@@ -74,6 +74,27 @@ class BackendLauncher {
       this.isRunning = false;
     }
   }
+
+  getPorts() {
+    if (this.server) {
+      return this.server.getPorts();
+    }
+    return [];
+  }
+
+  compile(data = {}) {
+    if (this.server) {
+      return this.server.compileDirect(data.code, data.board || data.fqbn);
+    }
+    return { success: false, error: 'Compiler server not running' };
+  }
+
+  upload(data = {}) {
+    if (this.server) {
+      return this.server.uploadDirect(data.code, data.port, data.fqbn);
+    }
+    return { success: false, error: 'Compiler server not running' };
+  }
 }
 
 module.exports = BackendLauncher;

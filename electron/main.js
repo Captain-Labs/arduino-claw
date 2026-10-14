@@ -19,6 +19,35 @@ if (!gotTheLock) {
   });
 }
 
+let currentTargetPortAddress = null;
+
+// Register IPC handlers
+ipcMain.handle('set-target-serial-port', (event, portAddress) => {
+  currentTargetPortAddress = portAddress;
+  return true;
+});
+
+ipcMain.handle('get-serial-ports', async () => {
+  if (backendLauncher) {
+    return backendLauncher.getPorts();
+  }
+  return [];
+});
+
+ipcMain.handle('compile-sketch', async (event, data) => {
+  if (backendLauncher) {
+    return backendLauncher.compile(data);
+  }
+  return { success: false, error: 'Compiler server not running' };
+});
+
+ipcMain.handle('upload-sketch', async (event, data) => {
+  if (backendLauncher) {
+    return backendLauncher.upload(data);
+  }
+  return { success: false, error: 'Compiler server not running' };
+});
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1360,
@@ -33,20 +62,37 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableWebSQL: false,
-      webSecurity: true,
+      webSecurity: false,
       spellcheck: false
     }
   });
 
-  // Enable Web Serial API in Chromium
+  // Enable Web Serial API in Chromium with targeted port matching
   mainWindow.webContents.session.on('select-serial-port', (event, portList, webContents, callback) => {
     event.preventDefault();
-    if (portList && portList.length > 0) {
-      // Auto-select first matching Arduino / CH340 / USB Serial port or let user pick via in-app modal
-      callback(portList[0].portId);
-    } else {
+    if (!portList || portList.length === 0) {
       callback('');
+      return;
     }
+
+    if (currentTargetPortAddress) {
+      const target = currentTargetPortAddress.toLowerCase().trim();
+      const match = portList.find(p => {
+        const name = (p.portName || '').toLowerCase();
+        const display = (p.displayName || '').toLowerCase();
+        return name.includes(target) || target.includes(name) || display.includes(target);
+      });
+
+      if (match) {
+        currentTargetPortAddress = null;
+        callback(match.portId);
+        return;
+      }
+    }
+
+    // Default to the first available hardware port
+    currentTargetPortAddress = null;
+    callback(portList[0].portId);
   });
 
   mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {

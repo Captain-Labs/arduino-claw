@@ -108,7 +108,15 @@ export async function requestPort() {
     port = await navigator.serial.requestPort({ filters: ARDUINO_FILTERS });
     return !!port;
   } catch (err) {
-    if (err.name === 'NotFoundError') return false;
+    if (err.name === 'NotFoundError') {
+      try {
+        port = await navigator.serial.requestPort();
+        return !!port;
+      } catch (e2) {
+        if (e2.name === 'NotFoundError') return false;
+        throw e2;
+      }
+    }
     throw err;
   }
 }

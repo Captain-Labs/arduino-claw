@@ -525,7 +525,7 @@ export function renderCompileErrorCard(errMsg, onRetry) {
       installCoreBtn.disabled = true;
       installCoreBtn.innerHTML = `<span class="spinner-inline" style="display:inline-block; width:12px; height:12px; border:2px solid #000; border-top-color:transparent; border-radius:50%; animation: spin 0.8s linear infinite; margin-right:6px;"></span> Installing ${coreId}…`;
       try {
-        const res = await fetch('http://localhost:5000/cores/install', {
+        const res = await fetch('http://127.0.0.1:5000/cores/install', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ core: coreId })

@@ -91,7 +91,7 @@ class ArduinoServer {
     // (Prevents macOS Sequoia "Allow to find devices on local networks" alert)
     let configDir = path.join(this.userDataDir, 'config');
     this.configPath = path.join(configDir, 'arduino-cli.yaml');
-    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\ndiscovery:\n  builtin:\n    mdns: false\n`;
+    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\n`;
 
     try {
       fs.mkdirSync(configDir, { recursive: true });
@@ -189,6 +189,18 @@ class ArduinoServer {
       });
     }
 
+    const payload = this.compileDirect(code, fqbn);
+    const status = payload.success ? 200 : (payload.error && payload.error.includes('Compile error') ? 500 : 400);
+    this.sendJson(res, status, payload);
+  }
+
+  compileDirect(code, fqbn = 'arduino:avr:uno') {
+    if (!code) return { success: false, error: 'Empty code' };
+    const cacheKey = crypto.createHash('sha256').update(`${fqbn}:${code}`).digest('hex');
+    if (this.compileCache.has(cacheKey)) {
+      return { ...this.compileCache.get(cacheKey), cached: true };
+    }
+
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sketch_'));
     const sketchName = path.basename(tmpDir);
     const sketchFile = path.join(tmpDir, `${sketchName}.ino`);
@@ -238,25 +250,23 @@ class ArduinoServer {
           cached: false
         };
 
-        // Cache compilation result
         this.compileCache.set(cacheKey, payload);
-
-        this.sendJson(res, 200, payload);
+        return payload;
       } else {
         const stderr = (result.stderr || result.stdout || '').trim();
         const details = stderr.split('\n').filter(Boolean);
-        this.sendJson(res, 400, {
+        return {
           success: false,
           error: 'Compilation failed',
           details,
           raw_stderr: stderr
-        });
+        };
       }
     } catch (err) {
-      this.sendJson(res, 500, {
+      return {
         success: false,
         error: `Compile error: ${err.message}`
-      });
+      };
     } finally {
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -266,8 +276,14 @@ class ArduinoServer {
 
   async handleUpload(req, res, body) {
     const { code, port, fqbn = 'arduino:avr:uno' } = body;
+    const payload = this.uploadDirect(code, port, fqbn);
+    const status = payload.success ? 200 : (payload.error && payload.error.includes('Missing') ? 400 : (payload.stage === 'upload' ? 400 : 500));
+    this.sendJson(res, status, payload);
+  }
+
+  uploadDirect(code, port, fqbn = 'arduino:avr:uno') {
     if (!code || !port) {
-      return this.sendJson(res, 400, { success: false, error: 'Missing code or port parameter' });
+      return { success: false, error: 'Missing code or port parameter' };
     }
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sketch_upload_'));
@@ -278,20 +294,20 @@ class ArduinoServer {
     try {
       const result = this.runCli(['compile', '--upload', '-b', fqbn, '-p', port, tmpDir], 60000);
       if (result.status === 0) {
-        this.sendJson(res, 200, {
+        return {
           success: true,
           message: `Uploaded successfully to ${port} (${fqbn})`,
           details: (result.stdout || '').trim()
-        });
+        };
       } else {
-        this.sendJson(res, 400, {
+        return {
           success: false,
           error: (result.stderr || result.stdout || 'Upload failed').trim(),
           stage: 'upload'
-        });
+        };
       }
     } catch (err) {
-      this.sendJson(res, 500, { success: false, error: err.message });
+      return { success: false, error: err.message };
     } finally {
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -299,7 +315,7 @@ class ArduinoServer {
     }
   }
 
-  handlePorts(res) {
+  getPorts() {
     const ports = [];
     const seen = new Set();
 
@@ -332,7 +348,7 @@ class ArduinoServer {
                 boardName = 'Arduino Uno (Official)';
               }
             }
-            ports.push({ port: addr, board: boardName, fqbn });
+            ports.push({ port: addr, address: addr, board: boardName, label: `${boardName} (${addr})`, fqbn });
             seen.add(addr);
           }
         }
@@ -348,9 +364,15 @@ class ArduinoServer {
               f.startsWith('ttyUSB') || f.startsWith('ttyACM') || f.startsWith('tty.usb')) {
             const fullPath = `/dev/${f}`;
             if (!seen.has(fullPath) && !/bluetooth|debug|oppo|gms/i.test(fullPath)) {
+              let boardName = 'Arduino Uno / USB Serial Device';
+              if (fullPath.includes('wch') || fullPath.includes('usbserial')) {
+                boardName = 'Arduino Uno (CH340)';
+              }
               ports.push({
                 port: fullPath,
-                board: 'Arduino Uno / USB Serial Device',
+                address: fullPath,
+                board: boardName,
+                label: `${boardName} (${fullPath})`,
                 fqbn: 'arduino:avr:uno'
               });
               seen.add(fullPath);
@@ -358,6 +380,38 @@ class ArduinoServer {
           }
         }
       } catch (_) {}
+
+      // Fallback on macOS via ioreg IOSerialBSDClient
+      if (process.platform === 'darwin') {
+        try {
+          const out = spawnSync('ioreg', ['-r', '-c', 'IOSerialBSDClient', '-l'], { encoding: 'utf-8', timeout: 2500 });
+          if (out.stdout) {
+            const blocks = out.stdout.split('+-o IOSerialBSDClient');
+            for (const b of blocks) {
+              const calloutMatch = b.match(/"IOCalloutDevice"\s*=\s*"([^"]+)"/);
+              if (calloutMatch) {
+                const devPath = calloutMatch[1];
+                if (!seen.has(devPath) && !/bluetooth|debug|oppo|gms/i.test(devPath)) {
+                  let boardName = 'Arduino Uno / USB Serial Device';
+                  if (/wch|usbserial/i.test(devPath)) {
+                    boardName = 'Arduino Uno (CH340)';
+                  } else if (/usbmodem/i.test(devPath)) {
+                    boardName = 'Arduino Uno';
+                  }
+                  ports.push({
+                    port: devPath,
+                    address: devPath,
+                    board: boardName,
+                    label: `${boardName} (${devPath})`,
+                    fqbn: 'arduino:avr:uno'
+                  });
+                  seen.add(devPath);
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
     } else {
       // 3. Scan Windows physical COM ports via PowerShell
       try {
@@ -368,7 +422,9 @@ class ArduinoServer {
             if (!seen.has(com)) {
               ports.push({
                 port: com,
+                address: com,
                 board: 'Arduino Uno / USB Serial Device',
+                label: `Arduino Uno (${com})`,
                 fqbn: 'arduino:avr:uno'
               });
               seen.add(com);
@@ -378,6 +434,11 @@ class ArduinoServer {
       } catch (_) {}
     }
 
+    return ports;
+  }
+
+  handlePorts(res) {
+    const ports = this.getPorts();
     this.sendJson(res, 200, { ok: true, ports });
   }
 
@@ -387,6 +448,7 @@ class ArduinoServer {
       'Content-Type': 'application/json',
       'Content-Length': Buffer.byteLength(payload),
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Private-Network': 'true',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Compiler-Key, Authorization'
     });
@@ -400,6 +462,7 @@ class ArduinoServer {
         if (req.method === 'OPTIONS') {
           res.writeHead(204, {
             'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Private-Network': 'true',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, X-Compiler-Key, Authorization'
           });

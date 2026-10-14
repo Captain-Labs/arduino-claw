@@ -1,7 +1,7 @@
 // modules/manager.js — Arduino IDE Boards & Library Manager
 // Full parity with Arduino IDE 2.x Boards & Library Manager UI
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = 'http://127.0.0.1:5000';
 
 let activeTab = 'boards'; // 'boards' | 'libraries'
 let searchDebounceTimer = null;
