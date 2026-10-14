@@ -88,18 +88,19 @@ class ArduinoServer {
     } catch (_) {}
 
     // 3. Write dynamic arduino-cli.yaml (portable, never hardcoded)
-    let configDir;
+    let configDir = path.join(this.userDataDir, 'config');
+    this.configPath = path.join(configDir, 'arduino-cli.yaml');
+    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\n`;
+
     try {
-      configDir = path.join(this.userDataDir, 'config');
       fs.mkdirSync(configDir, { recursive: true });
+      fs.writeFileSync(this.configPath, yamlContent, 'utf-8');
     } catch (_) {
       configDir = path.join(os.tmpdir(), 'arduino_claw_config');
       fs.mkdirSync(configDir, { recursive: true });
+      this.configPath = path.join(configDir, 'arduino-cli.yaml');
+      fs.writeFileSync(this.configPath, yamlContent, 'utf-8');
     }
-    this.configPath = path.join(configDir, 'arduino-cli.yaml');
-
-    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\n`;
-    fs.writeFileSync(this.configPath, yamlContent, 'utf-8');
     console.log(`[ArduinoServer] Generated dynamic config at: ${this.configPath}`);
 
     // 4. Ensure arduino:avr core is installed asynchronously
