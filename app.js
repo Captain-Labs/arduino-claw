@@ -976,35 +976,40 @@ function promptWebSerialPortTrigger() {
   const scanBtn = bubble.querySelector('.btn-trigger-web-serial');
   scanBtn.addEventListener('click', async () => {
     scanBtn.disabled = true;
-    scanBtn.textContent = 'Connecting...';
+    scanBtn.textContent = 'Detecting...';
     
     try {
-      const success = await serial.requestPort();
-      if (success) {
-        setConnectedUI();
-        const matched = await matchWebSerialToBridge();
-        if (matched) {
-          selectedCliPort = matched;
-          localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(matched));
-          updateCliPortUI();
-          const boardInfo = matched.board ? ` (${matched.board})` : '';
-          addMessage('system', `Connected to port: <strong>${matched.port || 'Unknown Port'}</strong>${boardInfo}`);
-        } else {
-          // If bridge not running or port not detected by bridge, use serial flasher directly
-          setUploadMode('webserial');
-          addMessage('system', 'Connected to Arduino (USB Serial)');
+      // 1. Check detected physical ports from bridge/server
+      let detectedPorts = [];
+      try {
+        const bridgeRes = await bridge.listPorts();
+        if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
+          detectedPorts = bridgeRes.ports;
         }
+      } catch (_) {}
+
+      // 2. If exactly 1 physical hardware port is detected, smoothly connect to it
+      if (detectedPorts.length === 1) {
+        const p = detectedPorts[0];
+        selectedCliPort = p;
+        localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
+        setConnectedUI();
+        updateCliPortUI();
+        const portName = p.port || p.address || 'Arduino';
+        const boardInfo = p.board ? ` (${p.board})` : '';
+        addMessage('system', `Connected to port: <strong>${portName}</strong>${boardInfo}`);
         bubble.remove();
         handleUpload();
-      } else {
-        addMessage('system', 'Port selection cancelled.');
-        scanBtn.disabled = false;
-        scanBtn.textContent = 'Select Port';
+        return;
       }
+
+      // 3. If multiple ports or 0 ports are detected, open the Port Selection Modal
+      bubble.remove();
+      openPortModal();
     } catch (err) {
-      addMessage('system', `Port selection error: ${err.message}`);
-      scanBtn.disabled = false;
-      scanBtn.textContent = 'Select Port';
+      addMessage('system', `Port detection error: ${err.message}`);
+      bubble.remove();
+      openPortModal();
     }
   });
 }
@@ -1100,16 +1105,18 @@ async function scanAndRenderModalPorts() {
   // 2. Get CLI Bridge detected ports (from embedded backend / compiler server)
   try {
     const bridgeRes = await bridge.listPorts();
-    if (bridgeRes && bridgeRes.ports) {
+    if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
       bridgeRes.ports.forEach((bp, idx) => {
-        const already = availableModalPorts.some(p => p.sub && p.sub.includes(bp.address));
+        const portAddr = bp.port || bp.address;
+        if (!portAddr) return;
+        const already = availableModalPorts.some(p => p.sub && p.sub.includes(portAddr));
         if (!already) {
           availableModalPorts.push({
             type: 'bridge',
             portObj: bp,
-            name: bp.label || bp.protocol_label || 'Arduino Board',
-            sub: `${bp.address}${bp.hardware_id ? ' (' + bp.hardware_id + ')' : ''}`,
-            badge: bp.protocol || 'USB',
+            name: bp.board || bp.label || bp.name || 'Arduino Uno',
+            sub: portAddr,
+            badge: 'USB Serial',
             id: `bridge_${idx}`
           });
         }
@@ -1121,6 +1128,8 @@ async function scanAndRenderModalPorts() {
   portModalList.innerHTML = '';
 
   if (availableModalPorts.length === 0) {
+    selectedModalPort = null;
+    if (portModalConnectBtn) portModalConnectBtn.disabled = true;
     portModalList.innerHTML = `
       <div class="port-modal-empty">
         <p style="margin: 0 0 6px 0; font-weight: 600; color: var(--text-primary);">No serial ports detected</p>
@@ -1169,16 +1178,21 @@ async function scanAndRenderModalPorts() {
 
 async function connectSelectedModalPort() {
   if (!selectedModalPort) return;
+  const targetPort = selectedModalPort;
   closePortModal();
 
-  if (selectedModalPort.type === 'webserial') {
-    serial.setPort(selectedModalPort.portObj);
+  if (targetPort.type === 'webserial') {
+    serial.setPort(targetPort.portObj);
     setConnectedUI();
-  } else if (selectedModalPort.type === 'bridge') {
-    selectedCliPort = selectedModalPort.portObj;
+    addMessage('system', `Connected to Arduino (${targetPort.name || 'USB Serial'})`);
+  } else if (targetPort.type === 'bridge') {
+    selectedCliPort = targetPort.portObj;
     localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
     setConnectedUI();
     updateCliPortUI();
+    const portAddr = selectedCliPort.port || selectedCliPort.address || 'Unknown Port';
+    const boardInfo = selectedCliPort.board ? ` (${selectedCliPort.board})` : '';
+    addMessage('system', `Connected to port: <strong>${portAddr}</strong>${boardInfo}`);
   }
 }
 

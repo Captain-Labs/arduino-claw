@@ -40,38 +40,43 @@
       "buildResources": "build-resources"
     },
     "files": [
-      "**/*",
+      "index.html",
+      "style.css",
+      "app.js",
+      "modules/**/*",
+      "electron/**/*",
+      "build-resources/**/*",
+      "!node_modules/**/test/**",
+      "!node_modules/**/tests/**",
+      "!node_modules/**/docs/**",
       "!dist/**",
       "!**/*.pem",
       "!setup_vps.sh",
       "!.git/**"
     ],
-    "extraResources": [
-      {
-        "from": "bin",
-        "to": "bin"
-      },
-      {
-        "from": "arduino-server",
-        "to": "arduino-server",
-        "filter": [
-          "**/*",
-          "!__pycache__/**",
-          "!arduino_downloads/**"
-        ]
-      }
-    ],
     "mac": {
       "icon": "build-resources/icon.icns",
       "category": "public.app-category.developer-tools",
+      "extraResources": [
+        {
+          "from": "bin/darwin-arm64",
+          "to": "bin"
+        },
+        {
+          "from": "arduino-server",
+          "to": "arduino-server",
+          "filter": [
+            "**/*",
+            "!__pycache__/**",
+            "!arduino_downloads/**",
+            "!arduino_data/packages/esp32/**"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
-        },
-        {
-          "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": ["arm64"]
         }
       ],
       "hardenedRuntime": false,
@@ -97,6 +102,23 @@
     },
     "win": {
       "icon": "build-resources/icon.ico",
+      "extraResources": [
+        {
+          "from": "bin/win32-x64",
+          "to": "bin"
+        },
+        {
+          "from": "arduino-server",
+          "to": "arduino-server",
+          "filter": [
+            "**/*",
+            "!__pycache__/**",
+            "!arduino_downloads/**",
+            "!arduino_data/packages/esp32/**",
+            "!arduino_data/packages/arduino/**"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "nsis",
@@ -118,6 +140,23 @@
     "linux": {
       "icon": "build-resources/icon.png",
       "category": "Development;IDE;",
+      "extraResources": [
+        {
+          "from": "bin/linux-x64",
+          "to": "bin"
+        },
+        {
+          "from": "arduino-server",
+          "to": "arduino-server",
+          "filter": [
+            "**/*",
+            "!__pycache__/**",
+            "!arduino_downloads/**",
+            "!arduino_data/packages/esp32/**",
+            "!arduino_data/packages/arduino/**"
+          ]
+        }
+      ],
       "target": [
         {
           "target": "AppImage",

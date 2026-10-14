@@ -1,11 +1,12 @@
 // electron/server.js
 // Native Node.js Arduino Compilation & Bridge Server for Arduino Claw
-// Requires ZERO Python or external dependencies — runs directly inside Electron
+// Zero Python or external dependencies — runs directly inside Electron
 
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { spawn, spawnSync } = require('child_process');
 
 class ArduinoServer {
@@ -17,6 +18,7 @@ class ArduinoServer {
     this.userDataDir = options.userDataDir || path.join(os.homedir(), '.arduino-claw');
     this.cliPath = null;
     this.configPath = null;
+    this.compileCache = new Map();
     this.initPaths();
   }
 
@@ -52,7 +54,6 @@ class ArduinoServer {
     }
 
     if (!this.cliPath) {
-      // Fallback to PATH lookup
       this.cliPath = exeName;
     }
 
@@ -62,7 +63,6 @@ class ArduinoServer {
     let dataDir, downloadsDir, userDir;
     const existingServerData = path.join(this.baseDir, 'arduino-server', 'arduino_data');
     
-    // In dev mode or if existing data directory is present and writable
     if (fs.existsSync(existingServerData)) {
       dataDir = existingServerData;
       downloadsDir = path.join(this.baseDir, 'arduino-server', 'arduino_downloads');
@@ -87,10 +87,11 @@ class ArduinoServer {
       fs.mkdirSync(userDir, { recursive: true });
     } catch (_) {}
 
-    // 3. Write dynamic arduino-cli.yaml (portable, never hardcoded)
+    // 3. Write dynamic arduino-cli.yaml with mDNS network discovery disabled
+    // (Prevents macOS Sequoia "Allow to find devices on local networks" alert)
     let configDir = path.join(this.userDataDir, 'config');
     this.configPath = path.join(configDir, 'arduino-cli.yaml');
-    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\n`;
+    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\ndiscovery:\n  builtin:\n    mdns: false\n`;
 
     try {
       fs.mkdirSync(configDir, { recursive: true });
@@ -105,6 +106,9 @@ class ArduinoServer {
 
     // 4. Ensure arduino:avr core is installed asynchronously
     this.ensureAvrCore();
+
+    // 5. Background compiler pre-warming (pre-caches avr-gcc toolchain into memory)
+    this.prewarmCompiler();
   }
 
   ensureAvrCore() {
@@ -123,6 +127,19 @@ class ArduinoServer {
         console.warn('[ArduinoServer] Core check warning:', err.message);
       }
     }, 1000);
+  }
+
+  prewarmCompiler() {
+    setTimeout(() => {
+      try {
+        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'prewarm_'));
+        const sketchName = path.basename(tmp);
+        fs.writeFileSync(path.join(tmp, `${sketchName}.ino`), 'void setup(){} void loop(){}');
+        this.runCli(['compile', '--fqbn', 'arduino:avr:uno', tmp], 15000);
+        fs.rmSync(tmp, { recursive: true, force: true });
+        console.log('[ArduinoServer] Compiler pre-warming completed successfully.');
+      } catch (_) {}
+    }, 2500);
   }
 
   getCliVersion() {
@@ -161,6 +178,17 @@ class ArduinoServer {
 
     let fqbn = boardMap[board] || (board.includes(':') ? board : `arduino:avr:${board}`);
 
+    // Check In-Memory Compilation Cache (0ms compilation on cache hit)
+    const cacheKey = crypto.createHash('sha256').update(`${fqbn}:${code}`).digest('hex');
+    if (this.compileCache.has(cacheKey)) {
+      const cached = this.compileCache.get(cacheKey);
+      return this.sendJson(res, 200, {
+        ...cached,
+        cached: true,
+        compile_time_ms: 0
+      });
+    }
+
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sketch_'));
     const sketchName = path.basename(tmpDir);
     const sketchFile = path.join(tmpDir, `${sketchName}.ino`);
@@ -175,7 +203,6 @@ class ArduinoServer {
 
       if (result.status === 0) {
         const buildFiles = fs.readdirSync(outDir);
-        // Look for hex or bin
         const hexFile = buildFiles.find(f => f.endsWith('.hex') && !f.includes('bootloader')) ||
                         buildFiles.find(f => f.endsWith('.hex'));
         const binFile = buildFiles.find(f => f.endsWith('.bin') && !f.includes('bootloader')) ||
@@ -188,7 +215,6 @@ class ArduinoServer {
           hexContent = fs.readFileSync(path.join(outDir, binFile)).toString('base64');
         }
 
-        // Parse program size from stdout
         const stdout = result.stdout || '';
         let programSize = 0;
         let maxSize = 32256;
@@ -201,7 +227,7 @@ class ArduinoServer {
           maxSize = parseInt(sizeMatch[3].replace(/,/g, ''), 10);
         }
 
-        this.sendJson(res, 200, {
+        const payload = {
           success: true,
           hex: hexContent,
           board: fqbn,
@@ -210,7 +236,12 @@ class ArduinoServer {
           percent_used: percentUsed,
           compile_time_ms: duration,
           cached: false
-        });
+        };
+
+        // Cache compilation result
+        this.compileCache.set(cacheKey, payload);
+
+        this.sendJson(res, 200, payload);
       } else {
         const stderr = (result.stderr || result.stdout || '').trim();
         const details = stderr.split('\n').filter(Boolean);
@@ -272,20 +303,34 @@ class ArduinoServer {
     const ports = [];
     const seen = new Set();
 
-    // 1. Query arduino-cli board list --json
+    // 1. Query arduino-cli board list with --discovery-timeout 0 to avoid mDNS network scan
     try {
-      const resCli = this.runCli(['board', 'list', '--json'], 5000);
+      const resCli = this.runCli(['board', 'list', '--discovery-timeout', '0', '--json'], 4000);
       if (resCli.status === 0 && resCli.stdout) {
         const data = JSON.parse(resCli.stdout);
         const detected = data.detected_ports || data.ports || [];
         for (const item of detected) {
           const addr = (item.port && typeof item.port === 'object') ? item.port.address : (item.address || item.port);
-          if (addr && !seen.has(addr)) {
-            let boardName = 'Arduino Device';
+          if (!addr) continue;
+
+          // Filter out Bluetooth, phones, and debug consoles
+          if (/bluetooth|debug-console|oppo|gms|incoming/i.test(addr)) {
+            continue;
+          }
+
+          if (!seen.has(addr)) {
+            let boardName = 'Arduino Uno';
             let fqbn = 'arduino:avr:uno';
             if (Array.isArray(item.matching_boards) && item.matching_boards.length > 0) {
               boardName = item.matching_boards[0].name || boardName;
               fqbn = item.matching_boards[0].fqbn || fqbn;
+            } else if (item.port && item.port.properties) {
+              const vid = (item.port.properties.vid || '').toLowerCase();
+              if (vid.includes('1a86')) {
+                boardName = 'Arduino Uno (CH340)';
+              } else if (vid.includes('2341')) {
+                boardName = 'Arduino Uno (Official)';
+              }
             }
             ports.push({ port: addr, board: boardName, fqbn });
             seen.add(addr);
@@ -294,7 +339,7 @@ class ArduinoServer {
       }
     } catch (_) {}
 
-    // 2. Scan OS serial device patterns for macOS & Linux
+    // 2. Scan physical OS USB/Serial ports on macOS & Linux
     if (process.platform !== 'win32') {
       try {
         const devFiles = fs.readdirSync('/dev');
@@ -302,13 +347,31 @@ class ArduinoServer {
           if (f.startsWith('cu.usb') || f.startsWith('cu.wch') || f.startsWith('cu.SLAB') ||
               f.startsWith('ttyUSB') || f.startsWith('ttyACM') || f.startsWith('tty.usb')) {
             const fullPath = `/dev/${f}`;
-            if (!seen.has(fullPath)) {
+            if (!seen.has(fullPath) && !/bluetooth|debug|oppo|gms/i.test(fullPath)) {
               ports.push({
                 port: fullPath,
-                board: 'USB Serial Device',
+                board: 'Arduino Uno / USB Serial Device',
                 fqbn: 'arduino:avr:uno'
               });
               seen.add(fullPath);
+            }
+          }
+        }
+      } catch (_) {}
+    } else {
+      // 3. Scan Windows physical COM ports via PowerShell
+      try {
+        const out = spawnSync('powershell', ['-NoProfile', '-Command', '[System.IO.Ports.SerialPort]::GetPortNames()'], { encoding: 'utf-8', timeout: 3000 });
+        if (out.stdout) {
+          const coms = out.stdout.trim().split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+          for (const com of coms) {
+            if (!seen.has(com)) {
+              ports.push({
+                port: com,
+                board: 'Arduino Uno / USB Serial Device',
+                fqbn: 'arduino:avr:uno'
+              });
+              seen.add(com);
             }
           }
         }
@@ -366,10 +429,9 @@ class ArduinoServer {
           return this.sendJson(res, 200, {
             boards: [
               { id: 'uno', name: 'Arduino Uno (ATmega328P)', fqbn: 'arduino:avr:uno' },
-              { id: 'nano', name: 'Arduino Nano', fqbn: 'arduino:avr:nano' },
-              { id: 'mega', name: 'Arduino Mega 2560', fqbn: 'arduino:avr:mega' },
-              { id: 'leonardo', name: 'Arduino Leonardo', fqbn: 'arduino:avr:leonardo' },
-              { id: 'esp32', name: 'ESP32 Dev Module', fqbn: 'esp32:esp32:esp32' }
+              { id: 'nano', name: 'Arduino Nano (Coming Soon)', fqbn: 'arduino:avr:nano' },
+              { id: 'mega', name: 'Arduino Mega 2560 (Coming Soon)', fqbn: 'arduino:avr:mega' },
+              { id: 'esp32', name: 'ESP32 Dev Module (Coming Soon)', fqbn: 'esp32:esp32:esp32' }
             ]
           });
         }
@@ -485,6 +547,7 @@ class ArduinoServer {
         }
       });
 
+      // Bind strictly to 127.0.0.1 (never 0.0.0.0)
       this.server.listen(this.port, '127.0.0.1', () => {
         console.log(`[ArduinoServer] Native compilation server listening on http://127.0.0.1:${this.port}`);
         resolve(true);
