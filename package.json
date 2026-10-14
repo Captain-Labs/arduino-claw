@@ -9,9 +9,9 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac dmg",
-    "dist:win": "electron-builder --win nsis",
-    "dist:linux": "electron-builder --linux AppImage deb",
-    "dist:all": "electron-builder -mwl"
+    "dist:win": "electron-builder --win nsis --x64",
+    "dist:linux": "electron-builder --linux AppImage deb --x64",
+    "dist:all": "electron-builder -mwl --x64"
   },
   "keywords": [
     "arduino",
@@ -47,6 +47,10 @@
       "!.git/**"
     ],
     "extraResources": [
+      {
+        "from": "bin",
+        "to": "bin"
+      },
       {
         "from": "arduino-server",
         "to": "arduino-server",
@@ -96,7 +100,7 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": ["x64"]
         }
       ]
     },
@@ -106,12 +110,24 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Arduino Claw",
-      "uninstallDisplayName": "Arduino Claw"
+      "uninstallDisplayName": "Arduino Claw",
+      "installerIcon": "build-resources/icon.ico",
+      "uninstallerIcon": "build-resources/icon.ico",
+      "installerHeaderIcon": "build-resources/icon.ico"
     },
     "linux": {
       "icon": "build-resources/icon.png",
       "category": "Development;IDE;",
-      "target": ["AppImage", "deb"]
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ]
     }
   }
 }

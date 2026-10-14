@@ -100,7 +100,7 @@ export async function requestPort() {
   }
 
   if (!navigator.serial) {
-    throw new Error('Web Serial API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Opera.');
+    throw new Error('Serial hardware access is not supported on this platform. Please run the desktop app or grant USB permissions.');
   }
 
   try {

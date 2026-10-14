@@ -81,8 +81,8 @@ if (!serial.isSerialSupported()) {
     unsupportedBanner.innerHTML = `
       <div class="unsupported-icon">🔌</div>
       <h2>Secure Context Required</h2>
-      <p>You loaded the site from <strong>${location.origin}</strong>.</p>
-      <p>Web Serial is restricted to secure contexts by browser security policies.</p>
+      <p>You loaded the application from <strong>${location.origin}</strong>.</p>
+      <p>USB Serial requires a secure context or desktop environment.</p>
       <p style="margin-top: 15px; font-size: 15px;">Please open the IDE at: <a href="http://localhost:${location.port || '8080'}/" style="color: var(--accent); font-weight: bold; text-decoration: underline;">http://localhost:${location.port || '8080'}/</a> instead!</p>
     `;
   }
@@ -990,9 +990,9 @@ function promptWebSerialPortTrigger() {
           const boardInfo = matched.board ? ` (${matched.board})` : '';
           addMessage('system', `Connected to port: <strong>${matched.port || 'Unknown Port'}</strong>${boardInfo}`);
         } else {
-          // If bridge not running or port not detected by bridge, use Web Serial directly
+          // If bridge not running or port not detected by bridge, use serial flasher directly
           setUploadMode('webserial');
-          addMessage('system', 'Connected via Web Serial');
+          addMessage('system', 'Connected to Arduino (USB Serial)');
         }
         bubble.remove();
         handleUpload();
@@ -1090,7 +1090,7 @@ async function scanAndRenderModalPorts() {
           portObj: wp,
           name: 'Arduino Uno / USB Serial Device',
           sub: `USB VID:PID ${vid}:${pid}`,
-          badge: 'Web Serial',
+          badge: 'Hardware Port',
           id: `webserial_${idx}`
         });
       });
@@ -1827,7 +1827,7 @@ async function handleUpload() {
     showFlashProgress(false);
     hideProcessStep();
     if (err.message && err.message.includes('Failed to fetch')) {
-      addMessage('system', '⚠️ **Compiler Server Offline**: Could not connect to the backend compilation server on `http://localhost:5000`.\n\nPlease start the server in terminal:\n```bash\ncd "arduino-server" && python3 server.py\n```');
+      addMessage('system', '⚠️ **Compiler Server Starting or Unreachable**: Could not connect to the local compilation server on `http://localhost:5000`.\n\nPlease ensure the app has permissions to bind local port 5000, or retry in a few seconds.');
     } else {
       addMessage('system', `Upload failed: ${err.message}`);
     }
