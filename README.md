@@ -2,94 +2,162 @@
 
 # 🦞 Arduino Claw
 
-### AI-Powered Arduino IDE with Zero-Config Embedded Compilation & Direct USB Web Serial Flashing
+### Next-Generation AI Arduino IDE Desktop Application with Zero-Config Embedded Compilation & Direct USB Serial Flashing
 
+[![GitHub Release](https://img.shields.io/github/v/release/Captain-Labs/arduino-claw?color=blue&label=Latest%20Release)](https://github.com/Captain-Labs/arduino-claw/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Web-blueviolet)](#downloads)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-blueviolet)](#-downloads-latest-release)
 [![Electron](https://img.shields.io/badge/Electron-29.x-47848F?logo=electron&logoColor=white)](#)
 [![Arduino CLI](https://img.shields.io/badge/Arduino%20CLI-0.35.x-00979D?logo=arduino&logoColor=white)](#)
+[![AI Engine](https://img.shields.io/badge/AI-Gemini%20%7C%20Llama%203.3%20%7C%20Ollama-orange)](#-multi-provider-ai-engine)
+
+<p align="center">
+  <b>Arduino Claw</b> is an open-source, AI-first desktop IDE that converts natural language prompts into production-ready Arduino C++ firmware, compiles sketches locally with an embedded zero-config compiler, and flashes microcontrollers directly over USB via high-speed serial protocols.
+</p>
+
+[**Download Installers**](#-downloads-latest-release) • [**Key Features**](#-key-features) • [**Supported Boards**](#-supported-hardware--boards) • [**Architecture**](#-system-architecture) • [**FAQ**](#-frequently-asked-questions-faq)
 
 ---
 
 </div>
 
+## 📑 Table of Contents
+- [📥 Downloads (Latest Release)](#-downloads-latest-release)
+- [✨ Key Features](#-key-features)
+- [⚡ Arduino Claw vs Traditional Arduino IDE](#-arduino-claw-vs-traditional-arduino-ide)
+- [🔌 Supported Hardware & Boards](#-supported-hardware--boards)
+- [🧠 Multi-Provider AI Engine](#-multi-provider-ai-engine)
+- [🚀 Quick Start Guide](#-quick-start-guide)
+- [🛠️ Building from Source](#️-building-from-source)
+- [📋 System Architecture](#-system-architecture)
+- [❓ Frequently Asked Questions (FAQ)](#-frequently-asked-questions-faq)
+- [📄 License](#-license)
+
+---
+
 ## 📥 Downloads (Latest Release)
 
-Download the ready-to-run standalone desktop installer for your operating system from [**Releases → Assets**](https://github.com/Captain-Labs/arduino-claw/releases/latest):
+Standalone, zero-dependency desktop installers for macOS, Windows, and Linux are available under [**Releases → Assets**](https://github.com/Captain-Labs/arduino-claw/releases/latest):
 
-| Operating System | Installer Format | Description |
+| Operating System | Package | Size | Architecture | Direct Download |
+| :--- | :--- | :--- | :--- | :--- |
+| 🍏 **macOS** | `Arduino.Claw-1.0.0-arm64.dmg` | **187.6 MB** | Apple Silicon (M1/M2/M3/M4) | [**Download DMG**](https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0-arm64.dmg) |
+| 🪟 **Windows** | `Arduino.Claw.Setup.1.0.0.exe` | **103.5 MB** | Windows 10 / 11 (x64) | [**Download Setup EXE**](https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw.Setup.1.0.0.exe) |
+| 🐧 **Linux** | `Arduino.Claw-1.0.0.AppImage` | **135.4 MB** | Linux x64 (Ubuntu, Debian, Fedora) | [**Download AppImage**](https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0.AppImage) |
+
+*All releases are standalone and bundle their own background compilation engine. No separate Python or Arduino IDE installations are required.*
+
+---
+
+## ✨ Key Features
+
+- 🤖 **Natural Language to Firmware**: Describe your electronics project, sensors, servos, displays, or robotics logic in plain conversational English. Arduino Claw generates verified, clean, non-blocking Arduino C++ code with comprehensive inline comments.
+- ⚡ **Zero-Config Embedded Compilation Engine**: Built-in native Arduino CLI backend runs automatically inside the desktop app. No command-line tools, external compiler servers, or manual environment setup needed.
+- 🔌 **Direct USB Flashing & Web Serial**: Flash compiled `.hex` sketches directly to your connected microcontroller over USB via high-speed STK500v1 / Web Serial protocols right inside the application window.
+- 🎯 **Native Port Selection Modal**: Click **Connect** in the navbar to open an interactive hardware device picker displaying detected board models, USB VID:PID, and serial ports with instant auto-refresh.
+- 🔄 **Integrated Real-Time Serial Monitor**: Monitor serial print output, debug sensors, and transmit commands with configurable baud rates (300 to 115200 baud) and auto-scrolling telemetry.
+- 📚 **Arduino 2.x Library & Board Manager**: Search, download, and manage thousands of open-source Arduino libraries and third-party board definitions with one-click installation.
+- 🧠 **Multi-Provider AI Intelligence**: Seamlessly switch between cloud providers (Google Gemini 1.5/2.0, Groq Llama 3.3, Cerebras, SambaNova, OpenRouter) or local private offline LLMs (Ollama, LM Studio).
+- 🗂️ **Multi-Session Chat History & Tabbed Editor**: Save and organize sketches across sessions. Rename chats, view reasoning chains, and edit code with VS Code-grade Monaco syntax highlighting.
+
+---
+
+## ⚡ Arduino Claw vs Traditional Arduino IDE
+
+| Feature | Standard Arduino IDE 2.x | Arduino Claw |
+| :--- | :---: | :---: |
+| **Conversational AI Code Assistant** | ❌ None / Plugin needed | ✅ **Built-in multi-model AI assistant** |
+| **Natural Language to C++ Code** | ❌ Manual coding | ✅ **Instant prompt-to-sketch generation** |
+| **Zero-Config Embedded Compiler** | ⚠️ Heavy separate setup | ✅ **Fully embedded, auto-starting backend** |
+| **One-Click Direct USB Flashing** | ⚠️ Requires pre-configured port | ✅ **Interactive modal + auto-connect** |
+| **Integrated Serial Monitor** | ✅ Basic serial monitor | ✅ **Telemetry-aware serial terminal** |
+| **Offline Local LLM Support** | ❌ No | ✅ **Full Ollama & LM Studio integration** |
+| **Lightweight App Bundle** | ⚠️ ~400 MB to 3+ GB | ✅ **Optimized ~100–180 MB installer** |
+
+---
+
+## 🔌 Supported Hardware & Boards
+
+Arduino Claw supports standard AVR, SAMD, and modern IoT microcontrollers:
+
+- **Arduino Uno** (R3, R4 Minima, R4 WiFi)
+- **Arduino Nano** (ATmega328P original & old bootloader)
+- **Arduino Mega 2560** & Mega ADK
+- **Arduino Leonardo & Micro** (ATmega32U4)
+- **ESP8266** (NodeMCU, Wemos D1 Mini)
+- **ESP32** (ESP32-WROOM, NodeMCU-32S, ESP32-S3 / C3)
+- **Raspberry Pi Pico** (RP2040 via Arduino Mbed core)
+- **Generic USB-to-Serial Adapters** (CH340, CP2102, FTDI, PL2303)
+
+---
+
+## 🧠 Multi-Provider AI Engine
+
+Arduino Claw gives you the freedom to choose your preferred AI model:
+
+| Provider | Supported Models | Best For |
 | :--- | :--- | :--- |
-| 🍏 **macOS** | [**`Arduino Claw-1.0.0-arm64.dmg`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | Apple Disk Image with drag-and-drop to `/Applications` |
-| 🪟 **Windows** | [**`Arduino Claw Setup 1.0.0.exe`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | NSIS Setup Wizard with desktop & Start menu shortcuts |
-| 🐧 **Linux** | [**`Arduino Claw-1.0.0.AppImage`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | Portable standalone executable (`chmod +x` and run) |
+| **Google Gemini** | Gemini 2.0 Flash, Gemini 1.5 Pro | Deep reasoning, complex sensor logic, fast streaming |
+| **Groq** | Llama 3.3 70B, Llama 3.1 8B | Ultra-low latency code generation (sub-second response) |
+| **Cerebras / SambaNova** | Llama 3.1 70B | High-speed inference |
+| **OpenRouter** | DeepSeek R1, Claude 3.5 Sonnet, GPT-4o | Multi-model routing & reasoning |
+| **Local Offline LLMs** | Ollama (`llama3`, `codellama`, `qwen2.5-coder`) | 100% private, offline programming without API keys |
 
 ---
 
-## ✨ Features
+## 🚀 Quick Start Guide
 
-- 🤖 **Natural Language to Firmware**: Describe your electronics project in plain English, and Arduino Claw writes, verifies, and compiles full Arduino C++ sketches with built-in reasoning telemetry.
-- ⚡ **Zero-Config Embedded Compiler Backend**: The Arduino CLI compiler runs seamlessly inside the app. No manual server launches, no terminal commands, and zero external installs.
-- 🔌 **Direct USB Flashing & Web Serial**: Flash your compiled `.hex` sketches directly over USB via high-speed STK500v1 / Web Serial protocols right inside the app.
-- 🎯 **Native Port Selection Modal**: Click **Connect** to open the in-app hardware device picker showing board names, USB VID:PID, and serial ports with instant refresh.
-- 📚 **Arduino IDE 2.x Boards & Library Manager**: Search, install, and update thousands of open-source Arduino libraries and board index packages with a single click.
-- 🔄 **Real-Time Serial Monitor**: Integrated terminal with auto-scrolling, baud rate control (300 to 115200), and auto-upload telemetry verification.
-- 🌐 **Multi-Provider AI Engine**: Supports Google Gemini, Groq (Llama 3.3), Cerebras, SambaNova, OpenRouter, and local Ollama / LM Studio models.
-- 🗂️ **Multi-Session Chat History & Tabbed Editor**: Save and organize sketches, double-click to rename chat sessions, and switch between code files with Monaco-powered syntax highlighting.
-
----
-
-## 🚀 Quick Start
-
-### 1. Launch the Desktop App
-Download and run the installer for your OS. The internal compiler server starts automatically in the background.
+### 1. Download & Launch
+Download the installer for your OS from [**Releases**](https://github.com/Captain-Labs/arduino-claw/releases/latest). Launch the app — the embedded compiler server starts automatically.
 
 ### 2. Configure Your AI Provider
-Click the ⚙️ **Settings** button in the top toolbar and enter your API key (e.g. Gemini, Groq, or OpenRouter).
+Click the ⚙️ **Settings** button in the top toolbar. Enter your API key (e.g. Google Gemini, Groq, or OpenRouter), or toggle **Local Ollama** for offline coding.
 
-### 3. Connect Your Arduino Board
-1. Plug in your Arduino Uno (or compatible board) via USB.
-2. Click **Connect** in the top navbar.
-3. Select your port in the **Select Serial Port** modal and click **Connect Port**.
+### 3. Connect Your Board
+1. Plug in your Arduino board via USB.
+2. Click **Connect** in the top navigation bar.
+3. Select your serial port in the modal and click **Connect Port**.
 
-### 4. Create & Upload
-Type a prompt such as:
-> *"Blink the built-in LED every 500ms and print telemetry to Serial"*
+### 4. Generate & Flash
+Type your project idea into the chat prompt, for example:
+> *"Create an ultrasonic distance radar using an HC-SR04 sensor and an SG90 servo motor that sweeps 0 to 180 degrees and prints distances to the Serial Monitor."*
 
-Click **Send** — the AI generates the code, compiles it in the background, and flashes it directly to your board!
+Click **Send** — Arduino Claw writes the code, compiles it in the background, and allows you to flash it straight to your board with a single click.
 
 ---
 
 ## 🛠️ Building from Source
 
 ### Prerequisites
-- Node.js (v18 or later)
-- npm
+- [Node.js](https://nodejs.org/) (v18.x or v20.x)
+- npm (v9.x or later)
+- Git
 
-### Setup & Run
+### Clone & Run Locally
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/Captain-Labs/arduino-claw.git
 cd arduino-claw
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Start desktop app in development mode
+# Run the desktop app in development mode
 npm start
 ```
 
-### Build Packages for Distribution
+### Packaging Installers
 ```bash
-# Build macOS .dmg
+# Package for macOS (.dmg)
 npm run dist:mac
 
-# Build Windows .exe setup wizard
+# Package for Windows (.exe setup wizard)
 npm run dist:win
 
-# Build Linux .AppImage and .deb
+# Package for Linux (.AppImage)
 npm run dist:linux
 
-# Build all platforms
+# Package all target platforms
 npm run dist:all
 ```
 
@@ -102,6 +170,7 @@ npm run dist:all
 │                    Arduino Claw Desktop                     │
 │  ┌───────────────────────┐       ┌───────────────────────┐  │
 │  │   AI Chat Assistant   │       │ Monaco Code Editor    │  │
+│  │ (Gemini/Groq/Ollama)  │       │ (Syntax Highlighting) │  │
 │  └───────────┬───────────┘       └───────────┬───────────┘  │
 │              │                               │              │
 │              ▼                               ▼              │
@@ -109,18 +178,40 @@ npm run dist:all
 │  │     Web Serial USB Flasher & In-App Port Selector     │  │
 │  └───────────────────────────┬───────────────────────────┘  │
 └──────────────────────────────┼──────────────────────────────┘
-                               │ HTTP / WebSocket (localhost:5000)
+                               │ Local IPC / HTTP (localhost:5000)
 ┌──────────────────────────────▼──────────────────────────────┐
 │       Embedded Python & Arduino-CLI Backend Server          │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  Arduino-CLI Core Engine • Library & Board Managers   │  │
 │  └───────────────────────────────────────────────────────┘  │
 └──────────────────────────────┬──────────────────────────────┘
-                               │ USB / Serial
+                               │ USB / Serial (STK500v1 / Baud 115200)
 ┌──────────────────────────────▼──────────────────────────────┐
 │                    Physical Arduino Board                   │
+│         (Uno / Nano / Mega / ESP32 / ESP8266 / RP2040)      │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## ❓ Frequently Asked Questions (FAQ)
+
+### Can Arduino Claw be used without an internet connection?
+Yes! You can connect Arduino Claw to a local **Ollama** or **LM Studio** instance running `codellama`, `deepseek-coder`, or `qwen2.5-coder`. Since the compilation engine runs locally on your machine, you can write, compile, and flash code 100% offline.
+
+### Do I need to install the official Arduino IDE first?
+No. Arduino Claw is completely standalone. It embeds its own compiler backend and board tools, eliminating the need to install Arduino IDE 2.x or any external toolchains.
+
+### How does in-app USB flashing work?
+Arduino Claw communicates with microcontrollers via native USB serial drivers and Web Serial protocols (STK500v1). It directly streams compiled binary hex files across the USB COM/serial port.
+
+### Which operating systems are supported?
+- **macOS**: Apple Silicon (M1, M2, M3, M4) and Intel x64 via Rosetta.
+- **Windows**: Windows 10 and Windows 11 (64-bit).
+- **Linux**: Ubuntu, Debian, Fedora, Arch Linux (via portable AppImage).
+
+### Is Arduino Claw free and open source?
+Yes, Arduino Claw is free, open source, and licensed under the permissive [MIT License](LICENSE).
 
 ---
 
