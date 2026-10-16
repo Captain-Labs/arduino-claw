@@ -283,25 +283,31 @@ export function initChat(container, onChipClick) {
  * Add a message to the chat panel.
  * @param {'user'|'ai'|'system'} role
  * @param {string} text
+ * @param {string} [reference]
+ * @param {string} [targetSessionId]
  */
-export function addMessage(role, text, reference = '') {
+export function addMessage(role, text, reference = '', targetSessionId = null) {
+  const currentId = targetSessionId || getActiveSessionId();
   const msg = { role, text, reference, timestamp: new Date() };
+  const isCurrentlyActive = getActiveSessionId() === currentId;
   
-  if (messages.length === 0 && chatContainer) {
-    chatContainer.innerHTML = '';
+  if (isCurrentlyActive) {
+    if (messages.length === 0 && chatContainer) {
+      chatContainer.innerHTML = '';
+    }
+    messages.push(msg);
+    renderMessage(msg);
   }
 
-  messages.push(msg);
-  renderMessage(msg);
-
-  // Save to active session storage
-  const currentId = getActiveSessionId();
+  // Save to target session storage
   const sessionMsgs = getSessionMessages(currentId);
   sessionMsgs.push(msg);
   localStorage.setItem(`arduino-claw:chat-messages:${currentId}`, JSON.stringify(sessionMsgs));
 
-  // Also save current editor code with this chat session
-  saveActiveSessionCode();
+  // Also save current editor code if currently active
+  if (isCurrentlyActive) {
+    saveActiveSessionCode();
+  }
 
   // Update session title based on first user message
   if (role === 'user') {

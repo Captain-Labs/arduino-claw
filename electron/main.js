@@ -96,10 +96,26 @@ function createWindow() {
   });
 
   // Enable Web Serial API in Chromium with targeted port matching
+  const consumedSerialCallbacks = new WeakSet();
+
   mainWindow.webContents.session.on('select-serial-port', (event, portList, webContents, callback) => {
     event.preventDefault();
+
+    if (consumedSerialCallbacks.has(callback)) {
+      return; // Already replied to this request
+    }
+
+    const safeCallback = (portId) => {
+      if (!consumedSerialCallbacks.has(callback)) {
+        consumedSerialCallbacks.add(callback);
+        try {
+          callback(portId || '');
+        } catch (_) {}
+      }
+    };
+
     if (!portList || portList.length === 0) {
-      callback('');
+      safeCallback('');
       return;
     }
 
@@ -113,7 +129,7 @@ function createWindow() {
 
       if (match) {
         currentTargetPortAddress = null;
-        callback(match.portId);
+        safeCallback(match.portId);
         return;
       }
     }
@@ -123,11 +139,15 @@ function createWindow() {
     currentTargetPortAddress = null;
 
     if (validUsbPorts.length > 0) {
-      callback(validUsbPorts[0].portId);
+      safeCallback(validUsbPorts[0].portId);
     } else {
       // NEVER auto-select Bluetooth or debug-console when no Arduino is connected!
-      callback('');
+      safeCallback('');
     }
+  });
+
+  mainWindow.webContents.session.on('select-serial-port-cancelled', () => {
+    currentTargetPortAddress = null;
   });
 
   mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {

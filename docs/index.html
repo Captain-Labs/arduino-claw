@@ -85,9 +85,9 @@
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
           </svg>
           <span class="github-text">Star</span>
-          <span class="github-stars" id="stars-count">⭐ 1.0.0</span>
+          <span class="github-stars" id="stars-count" style="display: none;"></span>
         </a>
-        <a href="#download" class="btn btn-primary nav-download-btn">Download Free</a>
+        <a href="#download" class="btn btn-primary nav-download-btn">Download App</a>
       </div>
     </div>
   </header>
@@ -115,7 +115,7 @@
             <span class="btn-icon">⚡</span>
             <span class="btn-text-group">
               <span class="btn-main-text">Download for <span id="user-os-name">Desktop</span></span>
-              <span class="btn-sub-text" id="user-os-sub">Standalone Installer • Free & Open Source</span>
+              <span class="btn-sub-text" id="user-os-sub">Standalone Installer • Open Source (MIT)</span>
             </span>
           </a>
           <a href="https://github.com/Captain-Labs/arduino-claw" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
@@ -123,7 +123,7 @@
           </a>
         </div>
 
-        <!-- App UI Interactive Preview Mockup -->
+        <!-- App UI Real Showcase Window -->
         <div class="mockup-wrapper">
           <div class="mockup-frame">
             <div class="mockup-toolbar">
@@ -132,99 +132,15 @@
                 <span class="dot yellow"></span>
                 <span class="dot green"></span>
               </div>
-              <div class="mockup-title">🦞 Arduino Claw — AI Workspace</div>
+              <div class="mockup-title">🦞 Arduino-Claw — AI Arduino IDE</div>
               <div class="mockup-status">
                 <span class="status-indicator"></span>
-                <span class="status-port">Connected: /dev/cu.usbserial-1140 (Uno R3)</span>
+                <span class="status-port">Connected: /dev/cu.usbserial-1140 (Arduino Uno)</span>
               </div>
             </div>
 
-            <div class="mockup-content">
-              <!-- Sidebar Chat -->
-              <aside class="mockup-chat">
-                <div class="chat-header">
-                  <div class="chat-avatar">🦞</div>
-                  <div class="chat-meta">
-                    <span class="chat-name">Arduino Claw AI</span>
-                    <span class="chat-model">Gemini 2.0 Flash • Connected</span>
-                  </div>
-                </div>
-
-                <div class="chat-messages">
-                  <div class="msg user-msg">
-                    <div class="msg-bubble">
-                      Create an ultrasonic distance radar with an HC-SR04 sensor and an SG90 servo motor. Sweep 0° to 180° and print telemetry to Serial.
-                    </div>
-                  </div>
-                  <div class="msg ai-msg">
-                    <div class="msg-bubble">
-                      <p>✨ <strong>Radar sketch generated & verified!</strong></p>
-                      <p>Pins: Trig=9, Echo=10, Servo=11. Implements smooth non-blocking microsecond pulses and serial streaming at 115200 baud.</p>
-                      <div class="quick-action-badge">✅ Compiled (0 errors) • Ready to Flash</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="chat-input-bar">
-                  <input type="text" value="Add OLED display support on I2C pins A4/A5..." readonly aria-label="Mock chat input">
-                  <button type="button" class="chat-send-btn" aria-label="Send">↑</button>
-                </div>
-              </aside>
-
-              <!-- Code Editor & Serial Preview -->
-              <div class="mockup-editor-area">
-                <div class="editor-tabs">
-                  <div class="editor-tab active">
-                    <span class="tab-icon">⚡</span>
-                    <span class="tab-title">radar_sweep.ino</span>
-                    <span class="tab-close">×</span>
-                  </div>
-                  <div class="editor-actions">
-                    <button type="button" class="mini-btn compile-btn">✔ Compile</button>
-                    <button type="button" class="mini-btn flash-btn">⚡ Flash USB</button>
-                  </div>
-                </div>
-
-                <pre class="code-editor"><code><span class="code-kw">#include</span> <span class="code-str">&lt;Servo.h&gt;</span>
-
-<span class="code-kw">const int</span> TRIG_PIN = <span class="code-num">9</span>;
-<span class="code-kw">const int</span> ECHO_PIN = <span class="code-num">10</span>;
-<span class="code-kw">const int</span> SERVO_PIN = <span class="code-num">11</span>;
-
-Servo radarServo;
-
-<span class="code-kw">void</span> <span class="code-fn">setup</span>() {
-  Serial.<span class="code-fn">begin</span>(<span class="code-num">115200</span>);
-  <span class="code-fn">pinMode</span>(TRIG_PIN, OUTPUT);
-  <span class="code-fn">pinMode</span>(ECHO_PIN, INPUT);
-  radarServo.<span class="code-fn">attach</span>(SERVO_PIN);
-}
-
-<span class="code-kw">void</span> <span class="code-fn">loop</span>() {
-  <span class="code-kw">for</span> (<span class="code-kw">int</span> pos = <span class="code-num">0</span>; pos &lt;= <span class="code-num">180</span>; pos += <span class="code-num">2</span>) {
-    radarServo.<span class="code-fn">write</span>(pos);
-    <span class="code-fn">delay</span>(<span class="code-num">15</span>);
-    <span class="code-kw">long</span> distance = <span class="code-fn">readDistance</span>();
-    Serial.<span class="code-fn">print</span>(pos);
-    Serial.<span class="code-fn">print</span>(<span class="code-str">","</span>);
-    Serial.<span class="code-fn">println</span>(distance);
-  }
-}</code></pre>
-
-                <!-- Serial Monitor Footer -->
-                <div class="mockup-serial">
-                  <div class="serial-header">
-                    <span>📡 Serial Monitor (115200 baud)</span>
-                    <span class="serial-status">STREAMING</span>
-                  </div>
-                  <div class="serial-output">
-                    <div>[RX] 42°, 24 cm</div>
-                    <div>[RX] 44°, 24 cm</div>
-                    <div>[RX] 46°, 23 cm</div>
-                    <div>[RX] 48°, 18 cm (Object Detected!)</div>
-                  </div>
-                </div>
-              </div>
+            <div class="mockup-image-container">
+              <img src="app-demo.png" alt="Arduino Claw Desktop Interface with AI Assistant, Pin Connection Guide, and Code Editor" class="real-demo-img" width="1024" height="676" fetchpriority="high">
             </div>
           </div>
         </div>
@@ -241,6 +157,14 @@ Servo radarServo;
         </p>
 
         <div class="features-grid">
+          <div class="feature-card highlight-card">
+            <div class="feature-icon">📌</div>
+            <h3 class="feature-title">AI Pin Selection & Wiring Guide</h3>
+            <p class="feature-desc">
+              Never guess pinouts or search datasheets again. If your command doesn't specify component pins, Arduino Claw prompts with <strong>"Let AI Decide Pins"</strong> or <strong>"Enter Pins Manually"</strong>, generating an automatic <strong>Pin Connection Guide</strong> table mapping component pins, voltages, and microcontroller pins with zero ambiguity.
+            </p>
+          </div>
+
           <div class="feature-card">
             <div class="feature-icon">🤖</div>
             <h3 class="feature-title">Prompt to Firmware in Seconds</h3>
@@ -545,7 +469,7 @@ Servo radarServo;
 
           <details class="faq-item">
             <summary class="faq-question">
-              <span>Is Arduino Claw free and open source?</span>
+              <span>Is Arduino Claw open source?</span>
               <span class="faq-toggle"></span>
             </summary>
             <div class="faq-answer">

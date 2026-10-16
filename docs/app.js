@@ -59,7 +59,7 @@ function detectUserOS() {
 }
 
 /**
- * Optional live fetch of repository stargazers count
+ * Fetch repository stargazers count only if > 100
  */
 async function fetchGitHubReleaseStats() {
   const starsEl = document.getElementById('stars-count');
@@ -71,11 +71,14 @@ async function fetchGitHubReleaseStats() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data.stargazers_count !== undefined) {
+      if (data.stargazers_count !== undefined && data.stargazers_count > 100) {
         starsEl.textContent = `⭐ ${data.stargazers_count}`;
+        starsEl.style.display = 'inline-block';
+      } else {
+        starsEl.style.display = 'none';
       }
     }
   } catch (err) {
-    // Graceful fallback to static text
+    starsEl.style.display = 'none';
   }
 }

@@ -117,12 +117,14 @@ function handleClearAllState() {
   if (selectionContextCard) selectionContextCard.classList.add('hidden');
 }
 
-// Bind Clear Chat Button
+// Bind Delete Active Chat Button in Navbar
 const chatClearBtn = document.getElementById('chat-clear-btn');
 if (chatClearBtn) {
+  chatClearBtn.title = 'Delete Chat Session';
   chatClearBtn.addEventListener('click', () => {
-    if (confirm('Start a new clean chat session?')) {
-      clearChat();
+    const activeId = getActiveSessionId();
+    if (confirm('Are you sure you want to delete this chat session?')) {
+      deleteSession(activeId);
       handleClearAllState();
     }
   });
@@ -844,15 +846,21 @@ async function autoDetectPorts() {
 }
 
 function updateCliPortUI() {
-  if (selectedCliPort) {
+  if (selectedCliPort && isConnected) {
     portDot.classList.add('connected');
     const boardName = selectedCliPort.board ? ` (${selectedCliPort.board})` : '';
     portLabel.textContent = `${selectedCliPort.port || 'Unknown Port'}${boardName}`;
     connectLabel.textContent = 'Disconnect';
     connectBtn.classList.add('connected');
+  } else if (selectedCliPort) {
+    portDot.classList.remove('connected');
+    const boardName = selectedCliPort.board ? ` (${selectedCliPort.board})` : '';
+    portLabel.textContent = `${selectedCliPort.port || 'Select Port'}${boardName}`;
+    connectLabel.textContent = 'Connect';
+    connectBtn.classList.remove('connected');
   } else {
     portDot.classList.remove('connected');
-    portLabel.textContent = 'No port';
+    portLabel.textContent = 'Click Connect';
     connectLabel.textContent = 'Connect';
     connectBtn.classList.remove('connected');
   }
@@ -878,27 +886,36 @@ async function initBridgeStatus() {
       uploadBtn.disabled = false;
       uploadBtn.title = 'Upload via Arduino CLI Bridge';
 
-      // Load saved port or auto-detect
+      // 1. Fetch live hardware ports to verify what is ACTUALLY plugged in
+      let livePorts = [];
+      try {
+        const portRes = await bridge.listPorts();
+        livePorts = portRes.ports || [];
+      } catch (_) {}
+
+      // 2. Validate saved port in localStorage against live plugged-in ports
       const saved = localStorage.getItem('arduino-claw:selected-cli-port');
       if (saved) {
         try {
-          selectedCliPort = JSON.parse(saved);
-          updateCliPortUI();
+          const parsed = JSON.parse(saved);
+          const isStillPlugged = livePorts.some(p => (p.port || '').toLowerCase() === (parsed.port || '').toLowerCase());
+          if (isStillPlugged) {
+            selectedCliPort = parsed;
+          } else {
+            selectedCliPort = null;
+            localStorage.removeItem('arduino-claw:selected-cli-port');
+          }
         } catch (_) {
           selectedCliPort = null;
         }
       }
       
-      if (!selectedCliPort) {
-        const portRes = await bridge.listPorts();
-        if (portRes.ports && portRes.ports.length === 1) {
-          selectedCliPort = portRes.ports[0];
-          localStorage.setItem('arduino-claw:selected-cli-port', JSON.stringify(selectedCliPort));
-          updateCliPortUI();
-        } else {
-          updateCliPortUI();
-        }
+      if (!selectedCliPort && livePorts.length === 1) {
+        selectedCliPort = livePorts[0];
       }
+
+      // Do NOT set isConnected = true on startup; only show port when plugged in
+      updateCliPortUI();
     } else {
       // Bridge offline — stay in Web Serial mode
       if (getUploadMode() === 'cli') {
@@ -1563,6 +1580,7 @@ async function handleSend() {
 async function generateAndShowCode(command) {
   setGenerating(true);
   currentAbortController = new AbortController();
+  const targetSessionId = getActiveSessionId();
 
   const thinkingId = renderThinking();
 
@@ -1578,7 +1596,7 @@ async function generateAndShowCode(command) {
     let i2cHardwarePrompt = '';
     if (isI2CPotentialProject(command, currentCode) && (isConnected || serial.hasPort())) {
       showProcessStep('🔍 I2C device detected. Running I2C Discovery Probe…');
-      addMessage('system', '🔍 **I2C Agent**: Probing I2C bus on board to discover hardware address…');
+      addMessage('system', '🔍 **I2C Agent**: Probing I2C bus on board to discover hardware address…', '', targetSessionId);
 
       try {
         let scanData = null;
@@ -1606,10 +1624,10 @@ async function generateAndShowCode(command) {
           const discoveredAddr = parseDiscoveredI2CAddress(scanOutput);
 
           if (discoveredAddr) {
-            addMessage('system', `✅ **I2C Discovered**: Found device at address <code>${discoveredAddr}</code>! Using this address in your sketch…`);
+            addMessage('system', `✅ **I2C Discovered**: Found device at address <code>${discoveredAddr}</code>! Using this address in your sketch…`, '', targetSessionId);
             i2cHardwarePrompt = `\n[VERIFIED_HARDWARE_ADDRESS]\nThe physical I2C bus scanner discovered device at address: ${discoveredAddr}. You MUST use ${discoveredAddr} in the code (e.g. for LiquidCrystal_I2C or sensors).\n`;
           } else {
-            addMessage('system', 'ℹ️ No responsive I2C address found during probe. Proceeding with standard defaults.');
+            addMessage('system', 'ℹ️ No responsive I2C address found during probe. Proceeding with standard defaults.', '', targetSessionId);
           }
         }
       } catch (err) {
@@ -1626,32 +1644,40 @@ async function generateAndShowCode(command) {
     removeThinking(thinkingId);
     currentAbortController = null;
 
-    // Switch back to main tab for the final user sketch
-    switchTab('main');
+    const isCurrentSession = getActiveSessionId() === targetSessionId;
 
     // Check for AI ERROR response
     if (result.code && result.code.startsWith('ERROR:')) {
       setGenerating(false);
-      addMessage('ai', result.code);
+      addMessage('ai', result.code, '', targetSessionId);
       return;
     }
 
-    // If AI returned new/modified code, load it into main editor tab
+    // If AI returned new/modified code, route it cleanly
     if (result.code) {
       lastGeneratedCode = result.code;
-      setMainCode(result.code);
-      
-      // Enable upload if connected
-      if (isConnected) {
-        uploadBtn.disabled = false;
+      if (isCurrentSession) {
+        switchTab('main');
+        setMainCode(result.code);
+        if (isConnected) {
+          uploadBtn.disabled = false;
+        }
+      } else {
+        // User switched to another session while generating: save to target session in localStorage
+        const sessions = getSessionsList();
+        const targetSession = sessions.find(s => s.id === targetSessionId);
+        if (targetSession) {
+          targetSession.code = result.code;
+          localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+        }
       }
     }
 
-    // Always display the AI's explanation/chat text
-    addMessage('ai', result.explanation);
+    // Always display / save the AI's explanation/chat text for the session that prompted it
+    addMessage('ai', result.explanation, '', targetSessionId);
 
-    // Auto-upload trigger
-    if (result.code && autoUploadActive) {
+    // Auto-upload trigger (only if user is still on the active session)
+    if (result.code && autoUploadActive && isCurrentSession) {
       if (isConnected || serial.hasPort()) {
         const autoBadge = document.getElementById('chat-process-auto-badge');
         if (autoBadge) autoBadge.style.display = 'inline';
@@ -1828,7 +1854,7 @@ async function handleUpload() {
         setFlashing(false);
         uploadBtn.disabled = false;
         hideProcessStep();
-        const errMsg = uploadData?.error || uploadData?.message || 'Upload failed';
+        const errMsg = uploadData?.raw_stderr || (uploadData?.details && uploadData.details.join('\n')) || uploadData?.error || uploadData?.message || 'Upload failed';
         setCompileError(errMsg);
         renderCompileErrorCard(errMsg, handleRetry);
         showFeedbackBar();
@@ -1879,7 +1905,7 @@ async function handleUpload() {
       setFlashing(false);
       uploadBtn.disabled = false;
       hideProcessStep();
-      const errMsg = compileData?.error || compileData?.message || 'Compilation failed';
+      const errMsg = compileData?.raw_stderr || (compileData?.details && compileData.details.join('\n')) || compileData?.error || compileData?.message || 'Compilation failed';
       setCompileError(errMsg);
       renderCompileErrorCard(errMsg, handleRetry);
       showFeedbackBar();
@@ -2194,7 +2220,9 @@ async function handleRetry() {
     if (validAttempt) targetGoal = validAttempt.command;
   }
 
-  const retryPrompt = `Fix the compilation error in the previous Arduino code for: "${targetGoal}". Deliver the complete, corrected, compile-ready Arduino sketch.`;
+  const failedCode = getCode();
+  const compileErr = lastAttempt?.compileError || 'Compilation failed';
+  const retryPrompt = `The following Arduino sketch failed to compile with this error:\n\`\`\`\n${compileErr}\n\`\`\`\n\nCurrent sketch code:\n\`\`\`cpp\n${failedCode}\n\`\`\`\n\nGoal: "${targetGoal}". Please fix all errors, correct the syntax, ensure all required libraries are included, and deliver the complete, corrected, compile-ready Arduino sketch.`;
 
   addMessage('system', '🔄 Retrying with AI auto-fix…');
   await generateAndShowCode(retryPrompt);

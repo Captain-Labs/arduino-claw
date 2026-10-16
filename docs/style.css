@@ -401,6 +401,21 @@ a {
   border-radius: 50%;
 }
 
+/* Real Demo Image Container */
+.mockup-image-container {
+  display: block;
+  background-color: #0c0d12;
+  position: relative;
+  line-height: 0;
+}
+
+.real-demo-img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 1024 / 676;
+}
+
 /* Mockup Split View */
 .mockup-content {
   display: grid;
