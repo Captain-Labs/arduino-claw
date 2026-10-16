@@ -21,7 +21,7 @@ Download the ready-to-run standalone desktop installer for your operating system
 | :--- | :--- | :--- |
 | 🍏 **macOS** | [**`Arduino Claw-1.0.0-arm64.dmg`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | Apple Disk Image with drag-and-drop to `/Applications` |
 | 🪟 **Windows** | [**`Arduino Claw Setup 1.0.0.exe`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | NSIS Setup Wizard with desktop & Start menu shortcuts |
-| 🐧 **Linux** | [**`Arduino Claw-1.0.0-arm64.AppImage`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | Portable standalone executable (chmod +x and double-click) |
+| 🐧 **Linux** | [**`Arduino Claw-1.0.0.AppImage`**](https://github.com/Captain-Labs/arduino-claw/releases/latest) | Portable standalone executable (`chmod +x` and run) |
 
 ---
 
@@ -63,7 +63,7 @@ Click **Send** — the AI generates the code, compiles it in the background, and
 
 ### Prerequisites
 - Node.js (v18 or later)
-- Python 3.9+ with `pip`
+- npm
 
 ### Setup & Run
 ```bash
