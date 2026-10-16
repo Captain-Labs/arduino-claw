@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arduino Claw — AI-Powered Arduino IDE Desktop Application</title>
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
+  <meta name="description" content="The next-generation AI-first Arduino IDE desktop app with zero-config embedded compilation, direct USB Web Serial flashing, and multi-provider AI code generation.">
+  <meta name="keywords" content="arduino, ai arduino ide, arduino claw, arduino code generator, esp32 ai, embedded systems, web serial flasher, arduino copilot, microcontroller ide">
+  <meta name="author" content="Captain Labs">
+  <link rel="canonical" href="https://captain-labs.github.io/arduino-claw/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://captain-labs.github.io/arduino-claw/">
+  <meta property="og:title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
+  <meta property="og:description" content="Turn plain English into production-ready Arduino firmware. Zero-config embedded compiler, 1-click USB flashing, and real-time serial monitor.">
+  <meta property="og:image" content="https://captain-labs.github.io/arduino-claw/og-image.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://captain-labs.github.io/arduino-claw/">
+  <meta property="twitter:title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
+  <meta property="twitter:description" content="Turn plain English into production-ready Arduino firmware. Zero-config embedded compiler, 1-click USB flashing, and real-time serial monitor.">
+  <meta property="twitter:image" content="https://captain-labs.github.io/arduino-claw/og-image.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Arduino Claw",
+    "operatingSystem": "macOS, Windows, Linux",
+    "applicationCategory": "DeveloperApplication",
+    "description": "AI-Powered Arduino IDE Desktop Application with Zero-Config Embedded Compilation, Direct USB Serial Flashing & Multi-Provider AI Engine",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Captain Labs",
+      "url": "https://github.com/Captain-Labs"
+    },
+    "downloadUrl": "https://github.com/Captain-Labs/arduino-claw/releases/latest"
+  }
+  </script>
+</head>
+<body>
+  <!-- Background Glow Accents -->
+  <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <img src="logo.png" alt="Arduino Claw Logo" class="brand-logo" width="36" height="36" fetchpriority="high">
+        <span class="brand-text">Arduino Claw</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#boards">Boards</a>
+        <a href="#comparison">Compare</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/Captain-Labs/arduino-claw" target="_blank" rel="noopener noreferrer" class="btn btn-ghost github-btn">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span class="github-text">Star</span>
+          <span class="github-stars" id="stars-count">⭐ 1.0.0</span>
+        </a>
+        <a href="#download" class="btn btn-primary nav-download-btn">Download Free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-section">
+      <div class="hero-container">
+        <div class="release-pill">
+          <span class="pill-dot"></span>
+          <span class="pill-text">v1.0.0 Stable Release Available</span>
+          <a href="#download" class="pill-link">Get It Now →</a>
+        </div>
+
+        <h1 class="hero-title">
+          Build Arduino Projects with <span class="gradient-text">Conversational AI</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Describe sensors, servos, motors, or robotics logic in plain English. Arduino Claw writes clean C++ sketches, compiles them locally with a zero-config embedded toolchain, and flashes your board directly over USB in seconds.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#download" class="btn btn-primary btn-lg" id="hero-download-btn">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-text-group">
+              <span class="btn-main-text">Download for <span id="user-os-name">Desktop</span></span>
+              <span class="btn-sub-text" id="user-os-sub">Standalone Installer • Free & Open Source</span>
+            </span>
+          </a>
+          <a href="https://github.com/Captain-Labs/arduino-claw" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+            View Source on GitHub
+          </a>
+        </div>
+
+        <!-- App UI Interactive Preview Mockup -->
+        <div class="mockup-wrapper">
+          <div class="mockup-frame">
+            <div class="mockup-toolbar">
+              <div class="traffic-lights">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <div class="mockup-title">🦞 Arduino Claw — AI Workspace</div>
+              <div class="mockup-status">
+                <span class="status-indicator"></span>
+                <span class="status-port">Connected: /dev/cu.usbserial-1140 (Uno R3)</span>
+              </div>
+            </div>
+
+            <div class="mockup-content">
+              <!-- Sidebar Chat -->
+              <aside class="mockup-chat">
+                <div class="chat-header">
+                  <div class="chat-avatar">🦞</div>
+                  <div class="chat-meta">
+                    <span class="chat-name">Arduino Claw AI</span>
+                    <span class="chat-model">Gemini 2.0 Flash • Connected</span>
+                  </div>
+                </div>
+
+                <div class="chat-messages">
+                  <div class="msg user-msg">
+                    <div class="msg-bubble">
+                      Create an ultrasonic distance radar with an HC-SR04 sensor and an SG90 servo motor. Sweep 0° to 180° and print telemetry to Serial.
+                    </div>
+                  </div>
+                  <div class="msg ai-msg">
+                    <div class="msg-bubble">
+                      <p>✨ <strong>Radar sketch generated & verified!</strong></p>
+                      <p>Pins: Trig=9, Echo=10, Servo=11. Implements smooth non-blocking microsecond pulses and serial streaming at 115200 baud.</p>
+                      <div class="quick-action-badge">✅ Compiled (0 errors) • Ready to Flash</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="chat-input-bar">
+                  <input type="text" value="Add OLED display support on I2C pins A4/A5..." readonly aria-label="Mock chat input">
+                  <button type="button" class="chat-send-btn" aria-label="Send">↑</button>
+                </div>
+              </aside>
+
+              <!-- Code Editor & Serial Preview -->
+              <div class="mockup-editor-area">
+                <div class="editor-tabs">
+                  <div class="editor-tab active">
+                    <span class="tab-icon">⚡</span>
+                    <span class="tab-title">radar_sweep.ino</span>
+                    <span class="tab-close">×</span>
+                  </div>
+                  <div class="editor-actions">
+                    <button type="button" class="mini-btn compile-btn">✔ Compile</button>
+                    <button type="button" class="mini-btn flash-btn">⚡ Flash USB</button>
+                  </div>
+                </div>
+
+                <pre class="code-editor"><code><span class="code-kw">#include</span> <span class="code-str">&lt;Servo.h&gt;</span>
+
+<span class="code-kw">const int</span> TRIG_PIN = <span class="code-num">9</span>;
+<span class="code-kw">const int</span> ECHO_PIN = <span class="code-num">10</span>;
+<span class="code-kw">const int</span> SERVO_PIN = <span class="code-num">11</span>;
+
+Servo radarServo;
+
+<span class="code-kw">void</span> <span class="code-fn">setup</span>() {
+  Serial.<span class="code-fn">begin</span>(<span class="code-num">115200</span>);
+  <span class="code-fn">pinMode</span>(TRIG_PIN, OUTPUT);
+  <span class="code-fn">pinMode</span>(ECHO_PIN, INPUT);
+  radarServo.<span class="code-fn">attach</span>(SERVO_PIN);
+}
+
+<span class="code-kw">void</span> <span class="code-fn">loop</span>() {
+  <span class="code-kw">for</span> (<span class="code-kw">int</span> pos = <span class="code-num">0</span>; pos &lt;= <span class="code-num">180</span>; pos += <span class="code-num">2</span>) {
+    radarServo.<span class="code-fn">write</span>(pos);
+    <span class="code-fn">delay</span>(<span class="code-num">15</span>);
+    <span class="code-kw">long</span> distance = <span class="code-fn">readDistance</span>();
+    Serial.<span class="code-fn">print</span>(pos);
+    Serial.<span class="code-fn">print</span>(<span class="code-str">","</span>);
+    Serial.<span class="code-fn">println</span>(distance);
+  }
+}</code></pre>
+
+                <!-- Serial Monitor Footer -->
+                <div class="mockup-serial">
+                  <div class="serial-header">
+                    <span>📡 Serial Monitor (115200 baud)</span>
+                    <span class="serial-status">STREAMING</span>
+                  </div>
+                  <div class="serial-output">
+                    <div>[RX] 42°, 24 cm</div>
+                    <div>[RX] 44°, 24 cm</div>
+                    <div>[RX] 46°, 23 cm</div>
+                    <div>[RX] 48°, 18 cm (Object Detected!)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Grid -->
+    <section class="features-section" id="features">
+      <div class="section-container">
+        <div class="section-badge">Capabilities</div>
+        <h2 class="section-title">Everything You Need to Build Faster</h2>
+        <p class="section-subtitle">
+          Arduino Claw merges conversational AI reasoning with native hardware compilation into a single, cohesive desktop application.
+        </p>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3 class="feature-title">Prompt to Firmware in Seconds</h3>
+            <p class="feature-desc">
+              Explain your electronics logic in simple conversational language. The AI understands sensor pinouts, I2C addresses, interrupts, and timings, generating bug-free Arduino C++ sketches with full explanations.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">Zero-Config Embedded Compiler</h3>
+            <p class="feature-desc">
+              No command-line wrestling, no separate Python server launches, and zero manual installations. The embedded native Arduino CLI compiler starts silently in the background on launch.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔌</div>
+            <h3 class="feature-title">Direct USB Web Serial Flashing</h3>
+            <p class="feature-desc">
+              Flash compiled <code>.hex</code> binaries directly onto your board via high-speed STK500v1 serial protocols with a single click—no external programmer hardware required.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3 class="feature-title">Native Port Selection Modal</h3>
+            <p class="feature-desc">
+              The built-in device scanner identifies connected USB boards, serial port names, and hardware VID:PIDs with real-time refresh and safe auto-connect.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3 class="feature-title">Multi-Provider AI & Offline Ollama</h3>
+            <p class="feature-desc">
+              Plug in your API keys for Google Gemini 2.0, Groq Llama 3.3, Cerebras, or OpenRouter. Or connect to local <strong>Ollama</strong> / LM Studio for 100% private, offline coding without API costs.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3 class="feature-title">Real-Time Serial Monitor</h3>
+            <p class="feature-desc">
+              Live bidirectional terminal with auto-scrolling telemetry, multi-speed baud rate control (300 to 115200), and auto-upload telemetry verification.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works 3-Step Walkthrough -->
+    <section class="how-it-works-section" id="how-it-works">
+      <div class="section-container">
+        <div class="section-badge">Workflow</div>
+        <h2 class="section-title">From Idea to Hardware in 3 Simple Steps</h2>
+        <p class="section-subtitle">
+          Say goodbye to syntax errors, missing include files, and endless forum troubleshooting.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">01</div>
+            <h3 class="step-title">Connect Your Board</h3>
+            <p class="step-desc">
+              Plug your Arduino Uno, Nano, Mega, or ESP32 into USB. Click <strong>Connect</strong> in the navbar and select your port.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">02</div>
+            <h3 class="step-title">Describe Your Idea</h3>
+            <p class="step-desc">
+              Type what you want to build in plain English. The AI drafts the schematic guidance, chooses pins, and writes the sketch.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">03</div>
+            <h3 class="step-title">Flash & Run</h3>
+            <p class="step-desc">
+              Click <strong>Flash USB</strong>. The embedded engine compiles the binary and writes it straight to your microcontroller memory.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supported Hardware Section -->
+    <section class="boards-section" id="boards">
+      <div class="section-container">
+        <div class="section-badge">Hardware Ecosystem</div>
+        <h2 class="section-title">Broad Microcontroller Compatibility</h2>
+        <p class="section-subtitle">
+          Compatible with popular 8-bit AVR boards, 32-bit ARM Cortex microcontrollers, and wireless IoT chips.
+        </p>
+
+        <div class="boards-grid">
+          <div class="board-badge">
+            <span class="board-chip">AVR</span>
+            <span class="board-name">Arduino Uno (R3 / R4)</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">AVR</span>
+            <span class="board-name">Arduino Nano</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">AVR</span>
+            <span class="board-name">Arduino Mega 2560</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">AVR</span>
+            <span class="board-name">Arduino Leonardo / Micro</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">Xtensa</span>
+            <span class="board-name">ESP32 & ESP32-S3</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">Xtensa</span>
+            <span class="board-name">ESP8266 (NodeMCU)</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">RP2040</span>
+            <span class="board-name">Raspberry Pi Pico</span>
+          </div>
+          <div class="board-badge">
+            <span class="board-chip">USB</span>
+            <span class="board-name">CH340 / CP2102 / FTDI</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="comparison-section" id="comparison">
+      <div class="section-container">
+        <div class="section-badge">Benchmark</div>
+        <h2 class="section-title">Arduino Claw vs Traditional Arduino IDE</h2>
+        <p class="section-subtitle">
+          Engineered from the ground up for modern, AI-assisted embedded engineering.
+        </p>
+
+        <div class="table-container">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col">Arduino IDE 2.x</th>
+                <th scope="col" class="highlight">🦞 Arduino Claw</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>AI Firmware Generator</strong></td>
+                <td>❌ None (Manual coding)</td>
+                <td class="highlight">✅ <strong>Built-in Conversational AI</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Zero-Config Compiler</strong></td>
+                <td>⚠️ Requires heavy local config</td>
+                <td class="highlight">✅ <strong>Embedded Background Engine</strong></td>
+              </tr>
+              <tr>
+                <td><strong>1-Click USB Flashing</strong></td>
+                <td>⚠️ Requires manual port setup</td>
+                <td class="highlight">✅ <strong>Modal Device Picker + Flasher</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Local Offline AI Support</strong></td>
+                <td>❌ No</td>
+                <td class="highlight">✅ <strong>Full Ollama & LM Studio integration</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Serial Monitor & Telemetry</strong></td>
+                <td>✅ Basic text stream</td>
+                <td class="highlight">✅ <strong>Integrated with live auto-scroll</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Package Size</strong></td>
+                <td>⚠️ 400 MB to 3+ GB</td>
+                <td class="highlight">✅ <strong>Optimized ~100–180 MB installer</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Downloads Section -->
+    <section class="download-section" id="download">
+      <div class="section-container">
+        <div class="section-badge">Ready to Start?</div>
+        <h2 class="section-title">Download Arduino Claw for Your OS</h2>
+        <p class="section-subtitle">
+          Standalone desktop packages with bundled compilation servers. No extra dependencies required.
+        </p>
+
+        <div class="download-cards-grid">
+          <!-- macOS -->
+          <div class="download-card" id="card-mac">
+            <div class="card-os-icon">🍏</div>
+            <h3 class="card-os-title">macOS</h3>
+            <p class="card-os-spec">Apple Silicon (M1 / M2 / M3 / M4) & Intel</p>
+            <div class="card-file-info">
+              <span class="file-name">Arduino.Claw-1.0.0-arm64.dmg</span>
+              <span class="file-size">187.6 MB</span>
+            </div>
+            <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0-arm64.dmg" class="btn btn-primary btn-block download-link">
+              Download .DMG
+            </a>
+            <span class="card-hint">Drag & drop to /Applications</span>
+          </div>
+
+          <!-- Windows -->
+          <div class="download-card" id="card-win">
+            <div class="card-os-icon">🪟</div>
+            <h3 class="card-os-title">Windows</h3>
+            <p class="card-os-spec">Windows 10 / 11 (64-bit)</p>
+            <div class="card-file-info">
+              <span class="file-name">Arduino.Claw.Setup.1.0.0.exe</span>
+              <span class="file-size">103.5 MB</span>
+            </div>
+            <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw.Setup.1.0.0.exe" class="btn btn-primary btn-block download-link">
+              Download Setup .EXE
+            </a>
+            <span class="card-hint">Includes desktop & Start menu shortcuts</span>
+          </div>
+
+          <!-- Linux -->
+          <div class="download-card" id="card-linux">
+            <div class="card-os-icon">🐧</div>
+            <h3 class="card-os-title">Linux</h3>
+            <p class="card-os-spec">Ubuntu, Debian, Fedora, Arch (x64)</p>
+            <div class="card-file-info">
+              <span class="file-name">Arduino.Claw-1.0.0.AppImage</span>
+              <span class="file-size">135.4 MB</span>
+            </div>
+            <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0.AppImage" class="btn btn-primary btn-block download-link">
+              Download .AppImage
+            </a>
+            <span class="card-hint">Standalone executable (chmod +x)</span>
+          </div>
+        </div>
+
+        <div class="github-release-note">
+          Looking for previous releases or source code? Visit the 
+          <a href="https://github.com/Captain-Labs/arduino-claw/releases" target="_blank" rel="noopener noreferrer">GitHub Releases Archive</a>.
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+      <div class="section-container">
+        <div class="section-badge">Common Questions</div>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-subtitle">
+          Everything you need to know about setting up and programming with Arduino Claw.
+        </p>
+
+        <div class="faq-accordion">
+          <details class="faq-item" open>
+            <summary class="faq-question">
+              <span>Can I use Arduino Claw completely offline?</span>
+              <span class="faq-toggle"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>Yes! By pointing the AI Settings to a local <strong>Ollama</strong> or <strong>LM Studio</strong> instance running models like <code>qwen2.5-coder</code> or <code>codellama</code>, you can prompt, generate code, compile, and flash entirely offline without sending any code over the internet.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Do I need to install the official Arduino IDE first?</span>
+              <span class="faq-toggle"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>No. Arduino Claw bundles its own internal compiler runtime, toolchains, and USB communication bridges. You do not need the Arduino IDE installed on your computer.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>How does in-app USB flashing work?</span>
+              <span class="faq-toggle"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>Arduino Claw communicates over your computer's USB serial controller using native STK500v1 serial flashing routines. When you click Flash, it opens the selected serial port, triggers the microcontroller DTR auto-reset, and streams the compiled hex payload directly into flash memory.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Which AI providers and models can I use?</span>
+              <span class="faq-toggle"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>Arduino Claw supports Google Gemini (Gemini 2.0 Flash / 1.5 Pro), Groq (Llama 3.3 70B), Cerebras, SambaNova, OpenRouter (DeepSeek R1, Claude 3.5 Sonnet, GPT-4o), as well as local Ollama and LM Studio endpoints.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Is Arduino Claw free and open source?</span>
+              <span class="faq-toggle"></span>
+            </summary>
+            <div class="faq-answer">
+              <p>Yes. Arduino Claw is 100% open source and licensed under the permissive MIT License. You can inspect the source code, fork the project, and contribute on GitHub.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="brand">
+          <img src="logo.png" alt="Arduino Claw Logo" class="brand-logo" width="28" height="28">
+          <span class="brand-text">Arduino Claw</span>
+        </div>
+        <p class="footer-tagline">
+          The next-generation AI-first Arduino IDE desktop application.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <div class="link-group">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#download">Downloads</a>
+          <a href="#boards">Supported Boards</a>
+          <a href="#comparison">Compare</a>
+        </div>
+        <div class="link-group">
+          <h4>Open Source</h4>
+          <a href="https://github.com/Captain-Labs/arduino-claw" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+          <a href="https://github.com/Captain-Labs/arduino-claw/releases" target="_blank" rel="noopener noreferrer">Release Notes</a>
+          <a href="https://github.com/Captain-Labs/arduino-claw/issues" target="_blank" rel="noopener noreferrer">Report an Issue</a>
+          <a href="https://github.com/Captain-Labs/arduino-claw/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2026 Captain Labs. Released under the MIT License.</p>
+      <p>Arduino is a trademark of Arduino SA. Arduino Claw is an independent open-source project.</p>
+    </div>
+  </footer>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+</html>
