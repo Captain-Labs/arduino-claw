@@ -91,7 +91,7 @@ class ArduinoServer {
     // (Prevents macOS Sequoia "Allow to find devices on local networks" alert)
     let configDir = path.join(this.userDataDir, 'config');
     this.configPath = path.join(configDir, 'arduino-cli.yaml');
-    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\n`;
+    const yamlContent = `directories:\n  data: "${dataDir.replace(/\\/g, '/')}"\n  downloads: "${downloadsDir.replace(/\\/g, '/')}"\n  user: "${userDir.replace(/\\/g, '/')}"\ndiscovery:\n  timeout: 0s\n`;
 
     try {
       fs.mkdirSync(configDir, { recursive: true });
@@ -467,42 +467,46 @@ class ArduinoServer {
       }
     }
 
-    // 2. Augment or discover via arduino-cli (if needed or to get exact FQBN)
-    try {
-      const resCli = this.runCli(['board', 'list', '--discovery-timeout', '0', '--json'], 1500);
-      if (resCli.status === 0 && resCli.stdout) {
-        const data = JSON.parse(resCli.stdout);
-        const detected = data.detected_ports || data.ports || [];
-        for (const item of detected) {
-          const addr = (item.port && typeof item.port === 'object') ? item.port.address : (item.address || item.port);
-          if (!addr) continue;
-          if (/bluetooth|debug-console|oppo|gms|incoming/i.test(addr)) continue;
+    // 2. ONLY run network discovery if explicitly requested by user
+    // (Skipping by default completely eliminates macOS Sequoia "Allow to find devices on local networks" alert)
+    if (includeNetwork) {
+      try {
+        const resCli = this.runCli(['board', 'list', '--discovery-timeout', '1000ms', '--json'], 3000);
+        if (resCli.status === 0 && resCli.stdout) {
+          const data = JSON.parse(resCli.stdout);
+          const detected = data.detected_ports || data.ports || [];
+          for (const item of detected) {
+            const addr = (item.port && typeof item.port === 'object') ? item.port.address : (item.address || item.port);
+            if (!addr) continue;
+            if (/bluetooth|debug-console|oppo|gms|incoming/i.test(addr)) continue;
 
-          let boardName = 'Arduino Uno';
-          let fqbn = 'arduino:avr:uno';
-          if (Array.isArray(item.matching_boards) && item.matching_boards.length > 0) {
-            boardName = item.matching_boards[0].name || boardName;
-            fqbn = item.matching_boards[0].fqbn || fqbn;
-          }
+            let boardName = 'Arduino Uno R3';
+            let fqbn = 'arduino:avr:uno';
+            if (Array.isArray(item.matching_boards) && item.matching_boards.length > 0) {
+              boardName = item.matching_boards[0].name || boardName;
+              fqbn = item.matching_boards[0].fqbn || fqbn;
+            }
 
-          const existing = ports.find(p => p.address.toLowerCase() === addr.toLowerCase() || p.port.toLowerCase() === addr.toLowerCase());
-          if (existing) {
-            existing.board = boardName;
-            existing.fqbn = fqbn;
-            existing.label = `${boardName} (${existing.port})`;
-          } else if (!seen.has(addr)) {
-            ports.push({ port: addr, address: addr, board: boardName, label: `${boardName} (${addr})`, fqbn });
-            seen.add(addr);
+            const existing = ports.find(p => p.address.toLowerCase() === addr.toLowerCase() || p.port.toLowerCase() === addr.toLowerCase());
+            if (existing) {
+              existing.board = boardName;
+              existing.fqbn = fqbn;
+              existing.label = `${boardName} (${existing.port})`;
+            } else if (!seen.has(addr)) {
+              ports.push({ port: addr, address: addr, board: boardName, label: `${boardName} (${addr})`, fqbn });
+              seen.add(addr);
+            }
           }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     return ports;
   }
 
-  handlePorts(res) {
-    const ports = this.getPorts();
+  handlePorts(res, parsedUrl) {
+    const includeNetwork = parsedUrl && parsedUrl.searchParams && parsedUrl.searchParams.get('network') === 'true';
+    const ports = this.getPorts(includeNetwork);
     this.sendJson(res, 200, { ok: true, ports });
   }
 
@@ -546,19 +550,20 @@ class ArduinoServer {
           });
         }
 
-        // Ports
+        // Ports (Pure USB hardware enumeration by default)
         if (pathname === '/ports' && req.method === 'GET') {
-          return this.handlePorts(res);
+          return this.handlePorts(res, parsedUrl);
         }
 
-        // Boards
+        // Boards (Flagship tested & verified board: Arduino Uno R3)
         if (pathname === '/boards' && req.method === 'GET') {
           return this.sendJson(res, 200, {
             boards: [
-              { id: 'uno', name: 'Arduino Uno (ATmega328P)', fqbn: 'arduino:avr:uno' },
-              { id: 'nano', name: 'Arduino Nano (Coming Soon)', fqbn: 'arduino:avr:nano' },
-              { id: 'mega', name: 'Arduino Mega 2560 (Coming Soon)', fqbn: 'arduino:avr:mega' },
-              { id: 'esp32', name: 'ESP32 Dev Module (Coming Soon)', fqbn: 'esp32:esp32:esp32' }
+              { id: 'uno', name: 'Arduino Uno R3 (Tested & Supported)', fqbn: 'arduino:avr:uno', status: 'supported' },
+              { id: 'nano', name: 'Arduino Nano (Coming Soon)', fqbn: 'arduino:avr:nano', status: 'coming_soon' },
+              { id: 'mega', name: 'Arduino Mega 2560 (Coming Soon)', fqbn: 'arduino:avr:mega', status: 'coming_soon' },
+              { id: 'leonardo', name: 'Arduino Leonardo (Coming Soon)', fqbn: 'arduino:avr:leonardo', status: 'coming_soon' },
+              { id: 'esp32', name: 'ESP32 Dev Module (Coming Soon)', fqbn: 'esp32:esp32:esp32', status: 'coming_soon' }
             ]
           });
         }

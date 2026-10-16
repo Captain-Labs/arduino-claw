@@ -198,12 +198,9 @@ export function deleteSession(id) {
 
   const activeId = getActiveSessionId();
   if (activeId === id) {
-    if (sessions.length > 0) {
-      loadSession(sessions[0].id);
-    } else {
-      const newId = createNewSession();
-      loadSession(newId);
-    }
+    // When deleting active chat, always open a fresh new chat session
+    const newId = createNewSession();
+    loadSession(newId);
   } else {
     dispatchSessionListUpdate();
   }

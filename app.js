@@ -126,6 +126,9 @@ if (chatClearBtn) {
     if (confirm('Are you sure you want to delete this chat session?')) {
       deleteSession(activeId);
       handleClearAllState();
+      if (typeof setEditorCode === 'function') {
+        setEditorCode(DEFAULT_SKETCH);
+      }
     }
   });
 }

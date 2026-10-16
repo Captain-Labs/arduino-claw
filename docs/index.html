@@ -2,40 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arduino Claw — AI-Powered Arduino IDE Desktop Application</title>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Arduino Claw — Next-Gen AI Arduino IDE with Embedded Compiler & Direct USB Flashing</title>
+
   <!-- Primary Meta Tags -->
-  <meta name="title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
-  <meta name="description" content="The next-generation AI-first Arduino IDE desktop app with zero-config embedded compilation, direct USB Web Serial flashing, and multi-provider AI code generation.">
-  <meta name="keywords" content="arduino, ai arduino ide, arduino claw, arduino code generator, esp32 ai, embedded systems, web serial flasher, arduino copilot, microcontroller ide">
+  <meta name="title" content="Arduino Claw — Next-Gen AI Arduino IDE with Embedded Compiler & Direct USB Flashing">
+  <meta name="description" content="AI-first Arduino IDE desktop application. Describe sensors or electronics in plain English; Arduino Claw writes C++ firmware, compiles locally with zero setup, and flashes over USB.">
+  <meta name="keywords" content="Arduino, AI IDE, Arduino AI Assistant, Embedded C++, Web Serial Flasher, STK500v1, Arduino Uno R3, Microcontroller IDE, Ollama Arduino">
   <meta name="author" content="Captain Labs">
+  <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://captain-labs.github.io/arduino-claw/">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://captain-labs.github.io/arduino-claw/">
-  <meta property="og:title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
-  <meta property="og:description" content="Turn plain English into production-ready Arduino firmware. Zero-config embedded compiler, 1-click USB flashing, and real-time serial monitor.">
+  <meta property="og:title" content="Arduino Claw — Next-Gen AI Arduino IDE Desktop Application">
+  <meta property="og:description" content="Convert natural language to Arduino C++ sketches, compile locally with zero setup, and flash microcontrollers directly over USB.">
   <meta property="og:image" content="https://captain-labs.github.io/arduino-claw/og-image.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://captain-labs.github.io/arduino-claw/">
-  <meta property="twitter:title" content="Arduino Claw — AI-Powered Arduino IDE Desktop Application">
-  <meta property="twitter:description" content="Turn plain English into production-ready Arduino firmware. Zero-config embedded compiler, 1-click USB flashing, and real-time serial monitor.">
+  <meta property="twitter:title" content="Arduino Claw — Next-Gen AI Arduino IDE Desktop Application">
+  <meta property="twitter:description" content="Convert natural language to Arduino C++ sketches, compile locally with zero setup, and flash microcontrollers directly over USB.">
   <meta property="twitter:image" content="https://captain-labs.github.io/arduino-claw/og-image.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
 
-  <!-- Fonts & Stylesheet -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->
+  <!-- Google Fonts: Inter & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Structured Data (JSON-LD) for Search Engines -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -43,18 +47,18 @@
     "name": "Arduino Claw",
     "operatingSystem": "macOS, Windows, Linux",
     "applicationCategory": "DeveloperApplication",
-    "description": "AI-Powered Arduino IDE Desktop Application with Zero-Config Embedded Compilation, Direct USB Serial Flashing & Multi-Provider AI Engine",
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD"
     },
+    "description": "Next-generation AI Arduino IDE desktop application featuring conversational firmware generation, zero-config embedded compilation, and direct USB serial flashing.",
+    "url": "https://captain-labs.github.io/arduino-claw/",
     "author": {
       "@type": "Organization",
       "name": "Captain Labs",
       "url": "https://github.com/Captain-Labs"
-    },
-    "downloadUrl": "https://github.com/Captain-Labs/arduino-claw/releases/latest"
+    }
   }
   </script>
 </head>
@@ -71,12 +75,21 @@
         <span class="brand-text">Arduino Claw</span>
       </a>
 
-      <nav class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#boards">Boards</a>
-        <a href="#comparison">Compare</a>
-        <a href="#faq">FAQ</a>
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <svg class="hamburger-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" class="line line-top"></line>
+          <line x1="3" y1="12" x2="21" y2="12" class="line line-mid"></line>
+          <line x1="3" y1="18" x2="21" y2="18" class="line line-bot"></line>
+        </svg>
+      </button>
+
+      <nav class="nav-links" id="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#boards" class="nav-link">Hardware</a>
+        <a href="#comparison" class="nav-link">Compare</a>
+        <a href="#faq" class="nav-link">FAQ</a>
       </nav>
 
       <div class="nav-actions">
@@ -87,7 +100,14 @@
           <span class="github-text">Star</span>
           <span class="github-stars" id="stars-count" style="display: none;"></span>
         </a>
-        <a href="#download" class="btn btn-primary nav-download-btn">Download App</a>
+        <a href="#download" class="btn btn-primary nav-download-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download App</span>
+        </a>
       </div>
     </div>
   </header>
@@ -98,8 +118,14 @@
       <div class="hero-container">
         <div class="release-pill">
           <span class="pill-dot"></span>
-          <span class="pill-text">v1.0.0 Stable Release Available</span>
-          <a href="#download" class="pill-link">Get It Now →</a>
+          <span class="pill-text">v1.0.0 Official Release</span>
+          <a href="#download" class="pill-link">
+            <span>Get Installers</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
         </div>
 
         <h1 class="hero-title">
@@ -112,36 +138,28 @@
 
         <div class="hero-cta-group">
           <a href="#download" class="btn btn-primary btn-lg" id="hero-download-btn">
-            <span class="btn-icon">⚡</span>
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+            </span>
             <span class="btn-text-group">
               <span class="btn-main-text">Download for <span id="user-os-name">Desktop</span></span>
               <span class="btn-sub-text" id="user-os-sub">Standalone Installer • Open Source (MIT)</span>
             </span>
           </a>
           <a href="https://github.com/Captain-Labs/arduino-claw" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
-            View Source on GitHub
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            <span>View Source on GitHub</span>
           </a>
         </div>
 
-        <!-- App UI Real Showcase Window -->
+        <!-- Real Desktop UI Preview Showcase (Clean single native frame, no artificial top toolbar) -->
         <div class="mockup-wrapper">
           <div class="mockup-frame">
-            <div class="mockup-toolbar">
-              <div class="traffic-lights">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-              </div>
-              <div class="mockup-title">🦞 Arduino-Claw — AI Arduino IDE</div>
-              <div class="mockup-status">
-                <span class="status-indicator"></span>
-                <span class="status-port">Connected: /dev/cu.usbserial-1140 (Arduino Uno)</span>
-              </div>
-            </div>
-
-            <div class="mockup-image-container">
-              <img src="app-demo.png" alt="Arduino Claw Desktop Interface with AI Assistant, Pin Connection Guide, and Code Editor" class="real-demo-img" width="1024" height="676" fetchpriority="high">
-            </div>
+            <img src="app-demo.png" alt="Arduino Claw Desktop Interface with AI Assistant, Pin Connection Guide, and Code Editor" class="real-demo-img" width="1024" height="676" fetchpriority="high">
           </div>
         </div>
       </div>
@@ -157,56 +175,104 @@
         </p>
 
         <div class="features-grid">
+          <!-- Pin Selection Feature -->
           <div class="feature-card highlight-card">
-            <div class="feature-icon">📌</div>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"></circle>
+                <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"></circle>
+                <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"></circle>
+                <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </div>
             <h3 class="feature-title">AI Pin Selection & Wiring Guide</h3>
             <p class="feature-desc">
               Never guess pinouts or search datasheets again. If your command doesn't specify component pins, Arduino Claw prompts with <strong>"Let AI Decide Pins"</strong> or <strong>"Enter Pins Manually"</strong>, generating an automatic <strong>Pin Connection Guide</strong> table mapping component pins, voltages, and microcontroller pins with zero ambiguity.
             </p>
           </div>
 
+          <!-- Prompt to Firmware -->
           <div class="feature-card">
-            <div class="feature-icon">🤖</div>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                <rect x="9" y="9" width="6" height="6"></rect>
+                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path>
+              </svg>
+            </div>
             <h3 class="feature-title">Prompt to Firmware in Seconds</h3>
             <p class="feature-desc">
               Explain your electronics logic in simple conversational language. The AI understands sensor pinouts, I2C addresses, interrupts, and timings, generating bug-free Arduino C++ sketches with full explanations.
             </p>
           </div>
 
+          <!-- Zero Config Compiler -->
           <div class="feature-card">
-            <div class="feature-icon">⚡</div>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
             <h3 class="feature-title">Zero-Config Embedded Compiler</h3>
             <p class="feature-desc">
               No command-line wrestling, no separate Python server launches, and zero manual installations. The embedded native Arduino CLI compiler starts silently in the background on launch.
             </p>
           </div>
 
+          <!-- Direct USB Web Serial -->
           <div class="feature-card">
-            <div class="feature-icon">🔌</div>
-            <h3 class="feature-title">Direct USB Web Serial Flashing</h3>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2"></path>
+                <path d="M12 9v13"></path>
+                <path d="M9 22h6"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Direct USB Serial Flashing</h3>
             <p class="feature-desc">
               Flash compiled <code>.hex</code> binaries directly onto your board via high-speed STK500v1 serial protocols with a single click—no external programmer hardware required.
             </p>
           </div>
 
+          <!-- Native Port Picker -->
           <div class="feature-card">
-            <div class="feature-icon">🎯</div>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="22" y1="12" x2="18" y2="12"></line>
+                <line x1="6" y1="12" x2="2" y2="12"></line>
+                <line x1="12" y1="6" x2="12" y2="2"></line>
+                <line x1="12" y1="22" x2="12" y2="18"></line>
+              </svg>
+            </div>
             <h3 class="feature-title">Native Port Selection Modal</h3>
             <p class="feature-desc">
               The built-in device scanner identifies connected USB boards, serial port names, and hardware VID:PIDs with real-time refresh and safe auto-connect.
             </p>
           </div>
 
+          <!-- AI Model Agnostic -->
           <div class="feature-card">
-            <div class="feature-icon">🧠</div>
-            <h3 class="feature-title">Multi-Provider AI & Offline Ollama</h3>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Use Any AI Model of Your Choice</h3>
             <p class="feature-desc">
-              Plug in your API keys for Google Gemini 2.0, Groq Llama 3.3, Cerebras, or OpenRouter. Or connect to local <strong>Ollama</strong> / LM Studio for 100% private, offline coding without API costs.
+              Complete model freedom without vendor lock-in. Connect your API key for Google Gemini, Groq, Cerebras, OpenRouter, or run 100% private and offline using local <strong>Ollama</strong> or LM Studio. You can use any model you prefer.
             </p>
           </div>
 
+          <!-- Serial Monitor -->
           <div class="feature-card">
-            <div class="feature-icon">🔄</div>
+            <div class="feature-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+              </svg>
+            </div>
             <h3 class="feature-title">Real-Time Serial Monitor</h3>
             <p class="feature-desc">
               Live bidirectional terminal with auto-scrolling telemetry, multi-speed baud rate control (300 to 115200), and auto-upload telemetry verification.
@@ -227,14 +293,25 @@
 
         <div class="steps-grid">
           <div class="step-card">
+            <div class="step-icon-badge">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </div>
             <div class="step-number">01</div>
-            <h3 class="step-title">Connect Your Board</h3>
+            <h3 class="step-title">Connect Your Arduino Uno R3</h3>
             <p class="step-desc">
-              Plug your Arduino Uno, Nano, Mega, or ESP32 into USB. Click <strong>Connect</strong> in the navbar and select your port.
+              Plug your Arduino Uno R3 board into USB. Click <strong>Connect</strong> in the navbar and select your port from the device list.
             </p>
           </div>
 
           <div class="step-card">
+            <div class="step-icon-badge">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
             <div class="step-number">02</div>
             <h3 class="step-title">Describe Your Idea</h3>
             <p class="step-desc">
@@ -243,6 +320,11 @@
           </div>
 
           <div class="step-card">
+            <div class="step-icon-badge">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
             <div class="step-number">03</div>
             <h3 class="step-title">Flash & Run</h3>
             <p class="step-desc">
@@ -253,53 +335,100 @@
       </div>
     </section>
 
-    <!-- Supported Hardware Section -->
+    <!-- Supported Hardware Section (Tested: Arduino Uno R3; All others Coming Soon) -->
     <section class="boards-section" id="boards">
       <div class="section-container">
         <div class="section-badge">Hardware Ecosystem</div>
-        <h2 class="section-title">Broad Microcontroller Compatibility</h2>
+        <h2 class="section-title">Tested & Supported Hardware</h2>
         <p class="section-subtitle">
-          Compatible with popular 8-bit AVR boards, 32-bit ARM Cortex microcontrollers, and wireless IoT chips.
+          <strong>Arduino Uno R3</strong> is our fully tested and verified flagship hardware platform. Additional boards are actively in development and coming soon.
         </p>
 
         <div class="boards-grid">
-          <div class="board-badge">
-            <span class="board-chip">AVR</span>
-            <span class="board-name">Arduino Uno (R3 / R4)</span>
+          <!-- Flagship Supported Board -->
+          <div class="board-badge board-badge-supported">
+            <div class="board-top">
+              <span class="board-chip">ATmega328P</span>
+              <span class="badge-status badge-active">
+                <span class="status-pulse-dot"></span>
+                <span>Tested & Supported</span>
+              </span>
+            </div>
+            <span class="board-name">Arduino Uno R3</span>
+            <span class="board-desc">Fully tested with native USB & CH340 / 16U2 serial bridges</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">AVR</span>
+
+          <!-- Coming Soon Boards -->
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">AVR</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">Arduino Nano</span>
+            <span class="board-desc">Compact ATmega328P development board</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">AVR</span>
+
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">AVR</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">Arduino Mega 2560</span>
+            <span class="board-desc">High-pinout robotics & automation platform</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">AVR</span>
+
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">AVR</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">Arduino Leonardo / Micro</span>
+            <span class="board-desc">Native USB ATmega32U4 controller</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">Xtensa</span>
+
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">Xtensa</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">ESP32 & ESP32-S3</span>
+            <span class="board-desc">Wi-Fi & Bluetooth IoT dual-core MCU</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">Xtensa</span>
+
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">Xtensa</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">ESP8266 (NodeMCU)</span>
+            <span class="board-desc">Classic low-cost Wi-Fi module</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">RP2040</span>
+
+          <div class="board-badge board-badge-soon">
+            <div class="board-top">
+              <span class="board-chip">RP2040</span>
+              <span class="badge-status badge-soon">Coming Soon</span>
+            </div>
             <span class="board-name">Raspberry Pi Pico</span>
+            <span class="board-desc">Dual ARM Cortex-M0+ microcontroller</span>
           </div>
-          <div class="board-badge">
-            <span class="board-chip">USB</span>
+
+          <div class="board-badge board-badge-supported">
+            <div class="board-top">
+              <span class="board-chip">USB Bridge</span>
+              <span class="badge-status badge-active">
+                <span class="status-pulse-dot"></span>
+                <span>Tested & Supported</span>
+              </span>
+            </div>
             <span class="board-name">CH340 / CP2102 / FTDI</span>
+            <span class="board-desc">Automatic hardware driver detection on all systems</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Comparison Table -->
+    <!-- Comparison Table (No emojis, sleek SVGs) -->
     <section class="comparison-section" id="comparison">
       <div class="section-container">
         <div class="section-badge">Benchmark</div>
@@ -314,39 +443,104 @@
               <tr>
                 <th scope="col">Feature</th>
                 <th scope="col">Arduino IDE 2.x</th>
-                <th scope="col" class="highlight">🦞 Arduino Claw</th>
+                <th scope="col" class="highlight">
+                  <div class="table-brand-cell">
+                    <img src="logo.png" alt="Logo" width="20" height="20">
+                    <span>Arduino Claw</span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>AI Firmware Generator</strong></td>
-                <td>❌ None (Manual coding)</td>
-                <td class="highlight">✅ <strong>Built-in Conversational AI</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-no">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span>None (Manual coding)</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Built-in Conversational AI</span>
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td><strong>Zero-Config Compiler</strong></td>
-                <td>⚠️ Requires heavy local config</td>
-                <td class="highlight">✅ <strong>Embedded Background Engine</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-warn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Requires heavy local config</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Embedded Background Engine</span>
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td><strong>1-Click USB Flashing</strong></td>
-                <td>⚠️ Requires manual port setup</td>
-                <td class="highlight">✅ <strong>Modal Device Picker + Flasher</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-warn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Requires manual port setup</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Modal Device Picker + Flasher</span>
+                  </span>
+                </td>
               </tr>
               <tr>
-                <td><strong>Local Offline AI Support</strong></td>
-                <td>❌ No</td>
-                <td class="highlight">✅ <strong>Full Ollama & LM Studio integration</strong></td>
+                <td><strong>Model Freedom & Offline AI</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-no">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span>No</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Use Any Cloud or Local Model</span>
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td><strong>Serial Monitor & Telemetry</strong></td>
-                <td>✅ Basic text stream</td>
-                <td class="highlight">✅ <strong>Integrated with live auto-scroll</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Basic text stream</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Integrated with live auto-scroll</span>
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td><strong>Package Size</strong></td>
-                <td>⚠️ 400 MB to 3+ GB</td>
-                <td class="highlight">✅ <strong>Optimized ~100–180 MB installer</strong></td>
+                <td>
+                  <span class="status-indicator-inline status-warn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>400 MB to 3+ GB</span>
+                  </span>
+                </td>
+                <td class="highlight">
+                  <span class="status-indicator-inline status-yes">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Optimized ~100–180 MB installer</span>
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -354,7 +548,7 @@
       </div>
     </section>
 
-    <!-- Downloads Section -->
+    <!-- Downloads Section (Modern SVG Platform Badges) -->
     <section class="download-section" id="download">
       <div class="section-container">
         <div class="section-badge">Ready to Start?</div>
@@ -366,7 +560,12 @@
         <div class="download-cards-grid">
           <!-- macOS -->
           <div class="download-card" id="card-mac">
-            <div class="card-os-icon">🍏</div>
+            <div class="card-os-icon">
+              <!-- Official Apple SVG Icon -->
+              <svg viewBox="0 0 170 170" width="38" height="38" fill="currentColor">
+                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.66-7.83-11.89-14.34-6.3-9.76-11.05-20.94-14.25-33.54-3.2-12.61-4.8-24.36-4.8-35.25 0-14.24 3.5-26.06 10.5-35.47 7-9.41 15.82-14.21 26.47-14.41 4.58 0 9.87 1.25 15.87 3.75 6 2.5 10.02 3.82 12.06 3.97 1.83-.24 5.92-1.61 12.27-4.11 6.35-2.51 11.75-3.64 16.21-3.4 12.1.66 21.75 4.97 28.96 12.92-10.66 6.44-15.89 15.28-15.69 26.52.2 8.78 3.55 16.03 10.05 21.75 6.5 5.72 14.1 9.07 22.8 10.05-2.46 7.42-5.46 14.65-9.01 21.68zM119.22 31.84c0-7.39 2.65-14.4 7.95-21.03 5.3-6.63 11.85-10.61 19.65-11.95.14 1.15.21 2.14.21 2.97 0 7.39-2.73 14.49-8.19 21.29-5.46 6.79-12.08 10.74-19.86 11.85-.27-1.08-.41-2.12-.41-3.13z"/>
+              </svg>
+            </div>
             <h3 class="card-os-title">macOS</h3>
             <p class="card-os-spec">Apple Silicon (M1 / M2 / M3 / M4) & Intel</p>
             <div class="card-file-info">
@@ -374,14 +573,24 @@
               <span class="file-size">187.6 MB</span>
             </div>
             <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0-arm64.dmg" class="btn btn-primary btn-block download-link">
-              Download .DMG
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download .DMG</span>
             </a>
             <span class="card-hint">Drag & drop to /Applications</span>
           </div>
 
           <!-- Windows -->
           <div class="download-card" id="card-win">
-            <div class="card-os-icon">🪟</div>
+            <div class="card-os-icon">
+              <!-- Official Windows SVG Icon -->
+              <svg viewBox="0 0 88 88" width="36" height="36" fill="currentColor">
+                <path d="M0 12.402l35.687-4.86.016 34.423-35.67.203zm35.67 33.529l.029 34.453-35.699-4.908-.002-29.743zm4.327-39.043l47.994-6.888v41.603l-47.994.275zm48.003 39.421v41.691l-48.003-6.793v-34.619z"/>
+              </svg>
+            </div>
             <h3 class="card-os-title">Windows</h3>
             <p class="card-os-spec">Windows 10 / 11 (64-bit)</p>
             <div class="card-file-info">
@@ -389,14 +598,28 @@
               <span class="file-size">103.5 MB</span>
             </div>
             <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw.Setup.1.0.0.exe" class="btn btn-primary btn-block download-link">
-              Download Setup .EXE
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download Setup .EXE</span>
             </a>
             <span class="card-hint">Includes desktop & Start menu shortcuts</span>
           </div>
 
           <!-- Linux -->
           <div class="download-card" id="card-linux">
-            <div class="card-os-icon">🐧</div>
+            <div class="card-os-icon">
+              <!-- Official Linux Terminal / Tux SVG Icon -->
+              <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <polyline points="7 8 10 10 7 12"></polyline>
+                <line x1="13" y1="12" x2="17" y2="12"></line>
+              </svg>
+            </div>
             <h3 class="card-os-title">Linux</h3>
             <p class="card-os-spec">Ubuntu, Debian, Fedora, Arch (x64)</p>
             <div class="card-file-info">
@@ -404,7 +627,12 @@
               <span class="file-size">135.4 MB</span>
             </div>
             <a href="https://github.com/Captain-Labs/arduino-claw/releases/download/v1.0.0/Arduino.Claw-1.0.0.AppImage" class="btn btn-primary btn-block download-link">
-              Download .AppImage
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download .AppImage</span>
             </a>
             <span class="card-hint">Standalone executable (chmod +x)</span>
           </div>
@@ -433,7 +661,7 @@
               <span class="faq-toggle"></span>
             </summary>
             <div class="faq-answer">
-              <p>Yes! By pointing the AI Settings to a local <strong>Ollama</strong> or <strong>LM Studio</strong> instance running models like <code>qwen2.5-coder</code> or <code>codellama</code>, you can prompt, generate code, compile, and flash entirely offline without sending any code over the internet.</p>
+              <p>Yes! By pointing the AI Settings to a local <strong>Ollama</strong> or <strong>LM Studio</strong> instance, you can prompt, generate code, compile, and flash entirely offline without sending any code or prompts over the internet.</p>
             </div>
           </details>
 
@@ -463,7 +691,7 @@
               <span class="faq-toggle"></span>
             </summary>
             <div class="faq-answer">
-              <p>Arduino Claw supports Google Gemini (Gemini 2.0 Flash / 1.5 Pro), Groq (Llama 3.3 70B), Cerebras, SambaNova, OpenRouter (DeepSeek R1, Claude 3.5 Sonnet, GPT-4o), as well as local Ollama and LM Studio endpoints.</p>
+              <p>Arduino Claw is completely model-agnostic. You can connect any model from any provider—including Google Gemini, Groq, Cerebras, SambaNova, OpenRouter—or run any local offline model with Ollama or LM Studio. You have full freedom to use any model of your choice.</p>
             </div>
           </details>
 
@@ -499,7 +727,7 @@
           <h4>Product</h4>
           <a href="#features">Features</a>
           <a href="#download">Downloads</a>
-          <a href="#boards">Supported Boards</a>
+          <a href="#boards">Supported Hardware</a>
           <a href="#comparison">Compare</a>
         </div>
         <div class="link-group">

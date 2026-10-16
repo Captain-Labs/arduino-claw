@@ -9,13 +9,13 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-blueviolet)](#-downloads-latest-release)
 [![Electron](https://img.shields.io/badge/Electron-29.x-47848F?logo=electron&logoColor=white)](#)
 [![Arduino CLI](https://img.shields.io/badge/Arduino%20CLI-0.35.x-00979D?logo=arduino&logoColor=white)](#)
-[![AI Engine](https://img.shields.io/badge/AI-Gemini%20%7C%20Llama%203.3%20%7C%20Ollama-orange)](#-multi-provider-ai-engine)
+[![AI Engine](https://img.shields.io/badge/AI-Any%20LLM%20Supported-orange)](#-model-agnostic-ai-engine)
 
 <p align="center">
   <b>Arduino Claw</b> is an open-source, AI-first desktop IDE that converts natural language prompts into production-ready Arduino C++ firmware, compiles sketches locally with an embedded zero-config compiler, and flashes microcontrollers directly over USB via high-speed serial protocols.
 </p>
 
-[**Download Installers**](#-downloads-latest-release) • [**Key Features**](#-key-features) • [**Supported Boards**](#-supported-hardware--boards) • [**Architecture**](#-system-architecture) • [**FAQ**](#-frequently-asked-questions-faq)
+[**Download Installers**](#-downloads-latest-release) • [**Key Features**](#-key-features) • [**Supported Hardware**](#-tested--supported-hardware) • [**Architecture**](#-system-architecture) • [**FAQ**](#-frequently-asked-questions-faq)
 
 ---
 
@@ -25,8 +25,8 @@
 - [📥 Downloads (Latest Release)](#-downloads-latest-release)
 - [✨ Key Features](#-key-features)
 - [⚡ Arduino Claw vs Traditional Arduino IDE](#-arduino-claw-vs-traditional-arduino-ide)
-- [🔌 Supported Hardware & Boards](#-supported-hardware--boards)
-- [🧠 Multi-Provider AI Engine](#-multi-provider-ai-engine)
+- [🔌 Tested & Supported Hardware](#-tested--supported-hardware)
+- [🧠 Model-Agnostic AI Engine](#-model-agnostic-ai-engine)
 - [🚀 Quick Start Guide](#-quick-start-guide)
 - [🛠️ Building from Source](#️-building-from-source)
 - [📋 System Architecture](#-system-architecture)
@@ -76,32 +76,29 @@ Standalone, zero-dependency desktop installers for macOS, Windows, and Linux are
 
 ---
 
-## 🔌 Supported Hardware & Boards
+## 🔌 Tested & Supported Hardware
+ 
+### ✅ Fully Tested & Verified
+- **Arduino Uno R3** (ATmega328P — Native USB & CH340 / 16U2 serial bridges tested)
+- **Standard USB-to-Serial Bridges** (CH340, CP2102, FT232R, PL2303)
 
-Arduino Claw supports standard AVR, SAMD, and modern IoT microcontrollers:
-
-- **Arduino Uno** (R3, R4 Minima, R4 WiFi)
-- **Arduino Nano** (ATmega328P original & old bootloader)
-- **Arduino Mega 2560** & Mega ADK
+### ⏳ Coming Soon (In Active Development)
+- **Arduino Nano** (ATmega328P)
+- **Arduino Mega 2560** (ATmega2560)
 - **Arduino Leonardo & Micro** (ATmega32U4)
-- **ESP8266** (NodeMCU, Wemos D1 Mini)
-- **ESP32** (ESP32-WROOM, NodeMCU-32S, ESP32-S3 / C3)
-- **Raspberry Pi Pico** (RP2040 via Arduino Mbed core)
-- **Generic USB-to-Serial Adapters** (CH340, CP2102, FTDI, PL2303)
+- **ESP32 & ESP32-S3** (Xtensa 32-bit dual-core)
+- **ESP8266** (NodeMCU / Wemos D1 Mini)
+- **Raspberry Pi Pico** (RP2040)
 
 ---
 
-## 🧠 Multi-Provider AI Engine
+## 🧠 Model-Agnostic AI Engine
 
-Arduino Claw gives you the freedom to choose your preferred AI model:
+Arduino Claw is completely model-agnostic. You are not locked into any single AI provider or model architecture:
 
-| Provider | Supported Models | Best For |
-| :--- | :--- | :--- |
-| **Google Gemini** | Gemini 2.0 Flash, Gemini 1.5 Pro | Deep reasoning, complex sensor logic, fast streaming |
-| **Groq** | Llama 3.3 70B, Llama 3.1 8B | Ultra-low latency code generation (sub-second response) |
-| **Cerebras / SambaNova** | Llama 3.1 70B | High-speed inference |
-| **OpenRouter** | DeepSeek R1, Claude 3.5 Sonnet, GPT-4o | Multi-model routing & reasoning |
-| **Local Offline LLMs** | Ollama (`llama3`, `codellama`, `qwen2.5-coder`) | 100% private, offline programming without API keys |
+- **Any Cloud AI Provider**: Plug in your own API key for **Google Gemini**, **Groq**, **Cerebras**, **SambaNova**, **OpenRouter**, **OpenAI**, or **Anthropic**.
+- **Any Local Offline Model**: Connect directly to your local **Ollama** or **LM Studio** endpoint. Run 100% private, zero-latency coding without an internet connection or subscription fees.
+- **Choose Any Model**: Whether you prefer fast lightweight models or deep reasoning models, Arduino Claw works seamlessly with whatever model you choose.
 
 ---
 
