@@ -1,5 +1,5 @@
 // modules/chat.js — Chat Panel Renderer
-import { setCode, resetEditorTabs, DEFAULT_CODE } from './editor.js';
+import { setCode, resetEditorTabs, DEFAULT_CODE, getMainCode } from './editor.js';
 
 const messages = [];
 let chatContainer = null;
@@ -36,6 +36,21 @@ export function getSessionsList() {
   } catch (_) {
     return [];
   }
+}
+
+export function saveActiveSessionCode(code) {
+  try {
+    const currentId = getActiveSessionId();
+    if (!currentId) return;
+    const currentCode = code !== undefined ? code : (typeof getMainCode === 'function' ? getMainCode() : null);
+    if (currentCode === null || currentCode === undefined) return;
+    const sessions = getSessionsList();
+    const session = sessions.find(s => s.id === currentId);
+    if (session) {
+      session.code = currentCode;
+      localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+    }
+  } catch (_) {}
 }
 
 function createNewSession() {
@@ -121,6 +136,22 @@ function dispatchSessionListUpdate() {
 }
 
 export function loadSession(id) {
+  // 1. Save previous active session code before switching
+  const prevId = getActiveSessionId();
+  if (prevId && prevId !== id) {
+    try {
+      const currentCode = typeof getMainCode === 'function' ? getMainCode() : null;
+      if (currentCode !== null && currentCode !== undefined) {
+        const sessions = getSessionsList();
+        const prevSession = sessions.find(s => s.id === prevId);
+        if (prevSession) {
+          prevSession.code = currentCode;
+          localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+        }
+      }
+    } catch (_) {}
+  }
+
   setActiveSessionId(id);
   messages.length = 0;
   if (chatContainer) {
@@ -179,6 +210,22 @@ export function deleteSession(id) {
 }
 
 export function startNewSession() {
+  // 1. Save current session code before creating a new one
+  const currentId = getActiveSessionId();
+  if (currentId) {
+    try {
+      const currentCode = typeof getMainCode === 'function' ? getMainCode() : null;
+      if (currentCode !== null && currentCode !== undefined) {
+        const sessions = getSessionsList();
+        const currentSession = sessions.find(s => s.id === currentId);
+        if (currentSession) {
+          currentSession.code = currentCode;
+          localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+        }
+      }
+    } catch (_) {}
+  }
+
   const newId = createNewSession();
   loadSession(newId);
 }
@@ -223,6 +270,7 @@ export function initChat(container, onChipClick) {
       const codeEl = container?.querySelector('code');
       if (codeEl) {
         setCode(codeEl.textContent);
+        saveActiveSessionCode(codeEl.textContent);
         const originalText = applyBtn.innerHTML;
         applyBtn.innerHTML = '✓ Loaded!';
         setTimeout(() => { applyBtn.innerHTML = originalText; }, 2000);
@@ -251,6 +299,9 @@ export function addMessage(role, text, reference = '') {
   const sessionMsgs = getSessionMessages(currentId);
   sessionMsgs.push(msg);
   localStorage.setItem(`arduino-claw:chat-messages:${currentId}`, JSON.stringify(sessionMsgs));
+
+  // Also save current editor code with this chat session
+  saveActiveSessionCode();
 
   // Update session title based on first user message
   if (role === 'user') {

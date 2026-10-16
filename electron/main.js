@@ -48,6 +48,34 @@ ipcMain.handle('upload-sketch', async (event, data) => {
   return { success: false, error: 'Compiler server not running' };
 });
 
+function isRealUsbPort(p) {
+  const name = (p.portName || '').toLowerCase();
+  const display = (p.displayName || '').toLowerCase();
+
+  // Strict blacklist: ignore bluetooth, debug console, virtual modems, mobile phones
+  if (/bluetooth|debug-console|oppo|gms|wlan|modem|incoming|dialin/i.test(name) ||
+      /bluetooth|debug-console|oppo|gms|wlan|modem|incoming|dialin/i.test(display)) {
+    return false;
+  }
+
+  // Darwin (macOS): MUST be a USB serial / modem callout device
+  if (process.platform === 'darwin') {
+    return /usbserial|usbmodem|wchusb|slab|usb/i.test(name);
+  }
+
+  // Linux: MUST be ttyUSB or ttyACM
+  if (process.platform === 'linux') {
+    return /ttyusb|ttyacm/i.test(name);
+  }
+
+  // Windows: COM port (and must not be Bluetooth)
+  if (process.platform === 'win32') {
+    return /^com\d+/i.test(name);
+  }
+
+  return true;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1360,
@@ -90,9 +118,16 @@ function createWindow() {
       }
     }
 
-    // Default to the first available hardware port
+    // Filter strictly for real USB microcontroller ports
+    const validUsbPorts = portList.filter(isRealUsbPort);
     currentTargetPortAddress = null;
-    callback(portList[0].portId);
+
+    if (validUsbPorts.length > 0) {
+      callback(validUsbPorts[0].portId);
+    } else {
+      // NEVER auto-select Bluetooth or debug-console when no Arduino is connected!
+      callback('');
+    }
   });
 
   mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {

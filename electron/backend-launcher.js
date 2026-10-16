@@ -10,7 +10,12 @@ class BackendLauncher {
   constructor(app) {
     this.app = app;
     this.port = 5000;
-    this.server = null;
+    const userDataDir = this.app ? this.app.getPath('userData') : null;
+    this.server = new ArduinoServer({
+      port: this.port,
+      baseDir: path.resolve(__dirname, '..'),
+      userDataDir
+    });
     this.isRunning = false;
   }
 
@@ -43,13 +48,6 @@ class BackendLauncher {
     // 2. Start embedded native Node.js compiler server
     console.log(`[BackendLauncher] Starting embedded native compiler server on port ${this.port}...`);
     try {
-      const userDataDir = this.app ? this.app.getPath('userData') : null;
-      this.server = new ArduinoServer({
-        port: this.port,
-        baseDir: path.resolve(__dirname, '..'),
-        userDataDir
-      });
-
       const started = await this.server.start();
       if (started) {
         console.log('[BackendLauncher] Embedded compiler server is UP and listening!');

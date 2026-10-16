@@ -104,6 +104,25 @@ export async function initEditor(domElement) {
       customTheme,
       EditorState.readOnly.of(true),
       EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const currentDoc = update.state.doc.toString();
+          if (tabs[activeTabId]) {
+            tabs[activeTabId].code = currentDoc;
+          }
+          if (activeTabId === 'main') {
+            try {
+              const activeId = localStorage.getItem('arduino-claw:chat-active-session-id');
+              if (activeId) {
+                const sessions = JSON.parse(localStorage.getItem('arduino-claw:chat-sessions')) || [];
+                const session = sessions.find(s => s.id === activeId);
+                if (session) {
+                  session.code = currentDoc;
+                  localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+                }
+              }
+            } catch (_) {}
+          }
+        }
         if (update.selectionSet) {
           const selection = update.state.sliceDoc(
             update.state.selection.main.from,
@@ -330,6 +349,20 @@ export function setMainCode(code, title = null) {
       },
     });
   }
+
+  // Save to active session storage
+  try {
+    const activeId = localStorage.getItem('arduino-claw:chat-active-session-id');
+    if (activeId) {
+      const sessions = JSON.parse(localStorage.getItem('arduino-claw:chat-sessions')) || [];
+      const session = sessions.find(s => s.id === activeId);
+      if (session) {
+        session.code = code;
+        localStorage.setItem('arduino-claw:chat-sessions', JSON.stringify(sessions));
+      }
+    }
+  } catch (_) {}
+
   renderTabsUI();
 }
 

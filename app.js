@@ -1060,7 +1060,7 @@ async function openPortModal() {
   if (!portModalOverlay) return;
   portModalOverlay.classList.remove('hidden');
   selectedModalPort = null;
-  if (portModalConnectBtn) portModalConnectBtn.disabled = false;
+  if (portModalConnectBtn) portModalConnectBtn.disabled = true;
   await scanAndRenderModalPorts();
 }
 
@@ -1092,6 +1092,8 @@ if (portModalRequestBtn) {
         closePortModal();
         setConnectedUI();
         addMessage('system', 'Connected to Arduino (USB Serial)');
+      } else {
+        alert('No USB Arduino board detected. Please plug in your Arduino board via USB and try again.');
       }
     } catch (err) {
       console.warn('User cancelled port request:', err);
@@ -1111,28 +1113,44 @@ async function scanAndRenderModalPorts() {
   availableModalPorts = [];
   const seenAddresses = new Set();
 
-  // 1. Get CLI Bridge detected ports (embedded server / Electron IPC)
+  // 1. Get CLI Bridge detected ports (Electron IPC first, then HTTP fallback)
   try {
-    const bridgeRes = await bridge.listPorts();
-    if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
-      bridgeRes.ports.forEach((bp, idx) => {
-        const portAddr = bp.port || bp.address;
-        if (!portAddr) return;
-        const normalized = portAddr.trim().toLowerCase();
-        if (seenAddresses.has(normalized)) return;
-        seenAddresses.add(normalized);
-
-        const boardName = bp.board || bp.label || bp.name || 'Arduino Uno';
-        availableModalPorts.push({
-          type: 'bridge',
-          portObj: bp,
-          name: boardName,
-          sub: portAddr,
-          badge: 'USB Serial',
-          id: `bridge_${idx}`
-        });
-      });
+    let bridgePorts = [];
+    if (window.electronAPI && typeof window.electronAPI.listPorts === 'function') {
+      try {
+        const ipcPorts = await window.electronAPI.listPorts();
+        if (Array.isArray(ipcPorts) && ipcPorts.length > 0) {
+          bridgePorts = ipcPorts;
+        }
+      } catch (ipcErr) {
+        console.warn('IPC listPorts failed:', ipcErr);
+      }
     }
+
+    if (bridgePorts.length === 0) {
+      const bridgeRes = await bridge.listPorts();
+      if (bridgeRes && Array.isArray(bridgeRes.ports)) {
+        bridgePorts = bridgeRes.ports;
+      }
+    }
+
+    bridgePorts.forEach((bp, idx) => {
+      const portAddr = bp.port || bp.address;
+      if (!portAddr) return;
+      const normalized = portAddr.trim().toLowerCase();
+      if (seenAddresses.has(normalized)) return;
+      seenAddresses.add(normalized);
+
+      const boardName = bp.board || bp.label || bp.name || 'Arduino Uno';
+      availableModalPorts.push({
+        type: 'bridge',
+        portObj: bp,
+        name: boardName,
+        sub: portAddr,
+        badge: 'USB Serial',
+        id: `bridge_${idx}`
+      });
+    });
   } catch (err) {
     console.warn('Bridge port scan error:', err);
   }
@@ -1146,7 +1164,7 @@ async function scanAndRenderModalPorts() {
         const vid = info.usbVendorId ? `0x${info.usbVendorId.toString(16).padStart(4, '0')}` : '';
         const pid = info.usbProductId ? `0x${info.usbProductId.toString(16).padStart(4, '0')}` : '';
         const subStr = `USB VID:PID ${vid}:${pid}`;
-        const already = availableModalPorts.some(p => p.sub && p.sub.includes(subStr));
+        const already = availableModalPorts.some(p => p.sub && p.sub.toLowerCase().includes(subStr.toLowerCase()));
         if (!already) {
           availableModalPorts.push({
             type: 'webserial',
@@ -1172,7 +1190,7 @@ async function scanAndRenderModalPorts() {
         <p style="margin: 0; font-size: 11.5px;">Plug in your Arduino board via USB and click <strong>Refresh</strong>, or use <strong>Grant Access</strong> below.</p>
       </div>
     `;
-    if (portModalConnectBtn) portModalConnectBtn.disabled = false;
+    if (portModalConnectBtn) portModalConnectBtn.disabled = true;
     return;
   }
 
@@ -1219,34 +1237,8 @@ async function connectSelectedModalPort() {
     selectedModalPort = availableModalPorts[0];
   }
 
-  // 2. If still no port selected, re-query bridge for newly plugged in board
+  // 2. If still no port selected, return safely (do not connect without selection)
   if (!selectedModalPort) {
-    try {
-      const bridgeRes = await bridge.listPorts();
-      if (bridgeRes && bridgeRes.ports && bridgeRes.ports.length > 0) {
-        const bp = bridgeRes.ports[0];
-        selectedModalPort = {
-          type: 'bridge',
-          portObj: bp,
-          name: bp.board || bp.label || bp.name || 'Arduino Uno',
-          sub: bp.port || bp.address
-        };
-      }
-    } catch (_) {}
-  }
-
-  // 3. Fallback: prompt Web Serial permission
-  if (!selectedModalPort) {
-    closePortModal();
-    try {
-      const granted = await serial.requestPort();
-      if (granted) {
-        setConnectedUI();
-        addMessage('system', 'Connected to Arduino (USB Serial)');
-      }
-    } catch (e) {
-      addMessage('system', 'No port was selected.');
-    }
     return;
   }
 

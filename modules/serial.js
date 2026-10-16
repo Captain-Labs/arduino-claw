@@ -109,15 +109,10 @@ export async function requestPort() {
     return !!port;
   } catch (err) {
     if (err.name === 'NotFoundError') {
-      try {
-        port = await navigator.serial.requestPort();
-        return !!port;
-      } catch (e2) {
-        if (e2.name === 'NotFoundError') return false;
-        throw e2;
-      }
+      return false;
     }
-    throw err;
+    console.warn('[Serial] requestPort error:', err);
+    return false;
   }
 }
 

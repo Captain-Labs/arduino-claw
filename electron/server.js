@@ -319,55 +319,82 @@ class ArduinoServer {
     const ports = [];
     const seen = new Set();
 
-    // 1. Query arduino-cli board list with --discovery-timeout 0 to avoid mDNS network scan
-    try {
-      const resCli = this.runCli(['board', 'list', '--discovery-timeout', '0', '--json'], 4000);
-      if (resCli.status === 0 && resCli.stdout) {
-        const data = JSON.parse(resCli.stdout);
-        const detected = data.detected_ports || data.ports || [];
-        for (const item of detected) {
-          const addr = (item.port && typeof item.port === 'object') ? item.port.address : (item.address || item.port);
-          if (!addr) continue;
+    // 1. Fast Native OS Hardware USB/Serial Detection (15ms - 50ms)
+    if (process.platform === 'darwin') {
+      // macOS: Query ioreg IOSerialBSDClient
+      try {
+        const out = spawnSync('ioreg', ['-r', '-c', 'IOSerialBSDClient', '-l'], { encoding: 'utf-8', timeout: 2000 });
+        if (out.stdout) {
+          const blocks = out.stdout.split('+-o IOSerialBSDClient');
+          for (const b of blocks) {
+            const calloutMatch = b.match(/"IOCalloutDevice"\s*=\s*"([^"]+)"/);
+            if (!calloutMatch) continue;
+            const devPath = calloutMatch[1];
 
-          // Filter out Bluetooth, phones, and debug consoles
-          if (/bluetooth|debug-console|oppo|gms|incoming/i.test(addr)) {
-            continue;
-          }
+            // Filter out Bluetooth, phones, virtual debug consoles
+            if (/bluetooth|debug-console|oppo|gms|incoming/i.test(devPath)) continue;
+            // Only accept real USB serial / modem callouts
+            if (!/usbserial|usbmodem|wch|slab|usb/i.test(devPath)) continue;
 
-          if (!seen.has(addr)) {
-            let boardName = 'Arduino Uno';
-            let fqbn = 'arduino:avr:uno';
-            if (Array.isArray(item.matching_boards) && item.matching_boards.length > 0) {
-              boardName = item.matching_boards[0].name || boardName;
-              fqbn = item.matching_boards[0].fqbn || fqbn;
-            } else if (item.port && item.port.properties) {
-              const vid = (item.port.properties.vid || '').toLowerCase();
-              if (vid.includes('1a86')) {
+            if (!seen.has(devPath)) {
+              let boardName = 'Arduino Uno';
+              if (/wch|usbserial/i.test(devPath)) {
                 boardName = 'Arduino Uno (CH340)';
-              } else if (vid.includes('2341')) {
-                boardName = 'Arduino Uno (Official)';
+              } else if (/usbmodem/i.test(devPath)) {
+                boardName = 'Arduino Uno';
+              } else if (/slab/i.test(devPath)) {
+                boardName = 'ESP32 / USB Serial (CP2102)';
               }
+
+              ports.push({
+                port: devPath,
+                address: devPath,
+                board: boardName,
+                label: `${boardName} (${devPath})`,
+                fqbn: 'arduino:avr:uno'
+              });
+              seen.add(devPath);
             }
-            ports.push({ port: addr, address: addr, board: boardName, label: `${boardName} (${addr})`, fqbn });
-            seen.add(addr);
           }
         }
-      }
-    } catch (_) {}
-
-    // 2. Scan physical OS USB/Serial ports on macOS & Linux
-    if (process.platform !== 'win32') {
+      } catch (_) {}
+    } else if (process.platform === 'linux') {
+      // Linux: Scan /dev/serial/by-id and /dev/ttyUSB*, /dev/ttyACM*
       try {
+        const byIdDir = '/dev/serial/by-id';
+        if (fs.existsSync(byIdDir)) {
+          const entries = fs.readdirSync(byIdDir);
+          for (const entry of entries) {
+            const fullSymlink = path.join(byIdDir, entry);
+            try {
+              const realTarget = fs.realpathSync(fullSymlink);
+              if (!seen.has(realTarget)) {
+                let boardName = 'Arduino Uno / USB Serial';
+                if (/arduino/i.test(entry)) boardName = 'Arduino Uno';
+                else if (/ch340|1a86/i.test(entry)) boardName = 'Arduino Uno (CH340)';
+                else if (/cp210|slab/i.test(entry)) boardName = 'ESP32 / CP2102';
+                else if (/ftdi/i.test(entry)) boardName = 'Arduino (FTDI)';
+
+                ports.push({
+                  port: realTarget,
+                  address: realTarget,
+                  board: boardName,
+                  label: `${boardName} (${realTarget})`,
+                  fqbn: 'arduino:avr:uno'
+                });
+                seen.add(realTarget);
+              }
+            } catch (_) {}
+          }
+        }
+
+        // Also check direct device nodes if by-id was empty or missed something
         const devFiles = fs.readdirSync('/dev');
         for (const f of devFiles) {
-          if (f.startsWith('cu.usb') || f.startsWith('cu.wch') || f.startsWith('cu.SLAB') ||
-              f.startsWith('ttyUSB') || f.startsWith('ttyACM') || f.startsWith('tty.usb')) {
+          if (f.startsWith('ttyUSB') || f.startsWith('ttyACM')) {
             const fullPath = `/dev/${f}`;
-            if (!seen.has(fullPath) && !/bluetooth|debug|oppo|gms/i.test(fullPath)) {
-              let boardName = 'Arduino Uno / USB Serial Device';
-              if (fullPath.includes('wch') || fullPath.includes('usbserial')) {
-                boardName = 'Arduino Uno (CH340)';
-              }
+            if (!seen.has(fullPath)) {
+              const boardName = f.startsWith('ttyACM') ? 'Arduino Uno' : 'Arduino Uno (CH340)';
               ports.push({
                 port: fullPath,
                 address: fullPath,
@@ -380,59 +407,96 @@ class ArduinoServer {
           }
         }
       } catch (_) {}
+    } else if (process.platform === 'win32') {
+      // Windows: Query WMI for friendly port names or PowerShell GetPortNames
+      try {
+        const out = spawnSync('powershell', [
+          '-NoProfile',
+          '-Command',
+          'Get-CimInstance Win32_PnPEntity | Where-Object { $_.PNPClass -eq "Ports" -or $_.Caption -match "COM\\d+" } | Select-Object -ExpandProperty Caption'
+        ], { encoding: 'utf-8', timeout: 2500 });
 
-      // Fallback on macOS via ioreg IOSerialBSDClient
-      if (process.platform === 'darwin') {
+        if (out.stdout) {
+          const lines = out.stdout.trim().split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+          for (const line of lines) {
+            const comMatch = line.match(/\((COM\d+)\)/i);
+            if (comMatch) {
+              const com = comMatch[1].toUpperCase();
+              if (!seen.has(com) && !/bluetooth/i.test(line)) {
+                let boardName = 'Arduino Uno';
+                if (/ch340/i.test(line)) boardName = 'Arduino Uno (CH340)';
+                else if (/cp210/i.test(line)) boardName = 'ESP32 (CP210x)';
+                else if (/ftdi/i.test(line)) boardName = 'Arduino (FTDI)';
+                else if (/arduino/i.test(line)) boardName = line.split('(')[0].trim() || 'Arduino Uno';
+
+                ports.push({
+                  port: com,
+                  address: com,
+                  board: boardName,
+                  label: `${boardName} (${com})`,
+                  fqbn: 'arduino:avr:uno'
+                });
+                seen.add(com);
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      // Fallback: [System.IO.Ports.SerialPort]::GetPortNames()
+      if (ports.length === 0) {
         try {
-          const out = spawnSync('ioreg', ['-r', '-c', 'IOSerialBSDClient', '-l'], { encoding: 'utf-8', timeout: 2500 });
+          const out = spawnSync('powershell', ['-NoProfile', '-Command', '[System.IO.Ports.SerialPort]::GetPortNames()'], { encoding: 'utf-8', timeout: 1500 });
           if (out.stdout) {
-            const blocks = out.stdout.split('+-o IOSerialBSDClient');
-            for (const b of blocks) {
-              const calloutMatch = b.match(/"IOCalloutDevice"\s*=\s*"([^"]+)"/);
-              if (calloutMatch) {
-                const devPath = calloutMatch[1];
-                if (!seen.has(devPath) && !/bluetooth|debug|oppo|gms/i.test(devPath)) {
-                  let boardName = 'Arduino Uno / USB Serial Device';
-                  if (/wch|usbserial/i.test(devPath)) {
-                    boardName = 'Arduino Uno (CH340)';
-                  } else if (/usbmodem/i.test(devPath)) {
-                    boardName = 'Arduino Uno';
-                  }
-                  ports.push({
-                    port: devPath,
-                    address: devPath,
-                    board: boardName,
-                    label: `${boardName} (${devPath})`,
-                    fqbn: 'arduino:avr:uno'
-                  });
-                  seen.add(devPath);
-                }
+            const coms = out.stdout.trim().split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            for (const com of coms) {
+              const upper = com.toUpperCase();
+              if (!seen.has(upper)) {
+                ports.push({
+                  port: upper,
+                  address: upper,
+                  board: 'Arduino Uno',
+                  label: `Arduino Uno (${upper})`,
+                  fqbn: 'arduino:avr:uno'
+                });
+                seen.add(upper);
               }
             }
           }
         } catch (_) {}
       }
-    } else {
-      // 3. Scan Windows physical COM ports via PowerShell
-      try {
-        const out = spawnSync('powershell', ['-NoProfile', '-Command', '[System.IO.Ports.SerialPort]::GetPortNames()'], { encoding: 'utf-8', timeout: 3000 });
-        if (out.stdout) {
-          const coms = out.stdout.trim().split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-          for (const com of coms) {
-            if (!seen.has(com)) {
-              ports.push({
-                port: com,
-                address: com,
-                board: 'Arduino Uno / USB Serial Device',
-                label: `Arduino Uno (${com})`,
-                fqbn: 'arduino:avr:uno'
-              });
-              seen.add(com);
-            }
+    }
+
+    // 2. Augment or discover via arduino-cli (if needed or to get exact FQBN)
+    try {
+      const resCli = this.runCli(['board', 'list', '--discovery-timeout', '0', '--json'], 1500);
+      if (resCli.status === 0 && resCli.stdout) {
+        const data = JSON.parse(resCli.stdout);
+        const detected = data.detected_ports || data.ports || [];
+        for (const item of detected) {
+          const addr = (item.port && typeof item.port === 'object') ? item.port.address : (item.address || item.port);
+          if (!addr) continue;
+          if (/bluetooth|debug-console|oppo|gms|incoming/i.test(addr)) continue;
+
+          let boardName = 'Arduino Uno';
+          let fqbn = 'arduino:avr:uno';
+          if (Array.isArray(item.matching_boards) && item.matching_boards.length > 0) {
+            boardName = item.matching_boards[0].name || boardName;
+            fqbn = item.matching_boards[0].fqbn || fqbn;
+          }
+
+          const existing = ports.find(p => p.address.toLowerCase() === addr.toLowerCase() || p.port.toLowerCase() === addr.toLowerCase());
+          if (existing) {
+            existing.board = boardName;
+            existing.fqbn = fqbn;
+            existing.label = `${boardName} (${existing.port})`;
+          } else if (!seen.has(addr)) {
+            ports.push({ port: addr, address: addr, board: boardName, label: `${boardName} (${addr})`, fqbn });
+            seen.add(addr);
           }
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     return ports;
   }
