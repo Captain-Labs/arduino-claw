@@ -1,5 +1,5 @@
 build_cache:
-    compilation_count_since_last_purge: 3
+    compilation_count_since_last_purge: 4
 cache:
     api2:
         arduino:

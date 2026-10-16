@@ -1046,6 +1046,10 @@ const portModalRequestBtn = document.getElementById('port-modal-request-btn');
 const portModalList = document.getElementById('port-modal-list');
 
 let availableModalPorts = [];
+// Keep the currently highlighted modal entry in module scope. Without this
+// declaration, opening the modal throws a ReferenceError before port discovery
+// can run, leaving the list stuck in its initial loading state.
+let selectedModalPort = null;
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
